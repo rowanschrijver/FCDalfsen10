@@ -7,8 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    .draggable-item { cursor: grab; }
-    .draggable-item:active { cursor: grabbing; }
+    .draggable-item { cursor: pointer; }
   </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-800 pb-12">
@@ -45,40 +44,11 @@
       </div>
     </header>
 
+    <!-- Hoofdlayout: Op mobiel (flex-col-reverse of order) komt de wedstrijd eerst -->
     <div class="max-w-5xl mx-auto px-4 mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
 
-      <!-- Kolom Links: Vaste Selectie -->
-      <div class="space-y-6">
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-          <div class="flex justify-between items-center mb-3">
-            <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm uppercase tracking-wider">
-              <i class="fa-solid fa-users text-emerald-600"></i> Selectie (<span id="player-count">0</span>)
-            </h2>
-            <button id="btn-reset-players" class="text-[11px] text-emerald-600 hover:underline font-medium cursor-pointer">
-              Reset Aanwezigheid
-            </button>
-          </div>
-
-          <div id="player-list" class="space-y-2 max-h-[500px] overflow-y-auto pr-1">
-            <!-- Dynamisch geladen -->
-          </div>
-
-          <!-- Extra gastspeler toevoegen -->
-          <form id="add-player-form" class="mt-4 pt-3 border-t border-slate-100 flex gap-2">
-            <input type="text" id="player-name" placeholder="+ Gastspeler" required class="w-full text-xs p-2 border border-slate-300 rounded-lg">
-            <select id="player-pos" class="text-xs p-2 border border-slate-300 rounded-lg">
-              <option value="KEEPER">K</option>
-              <option value="VERDEDIGER" selected>V</option>
-              <option value="MIDDENVELDER">M</option>
-              <option value="AANVALLER">A</option>
-            </select>
-            <button type="submit" class="bg-emerald-600 text-white text-xs px-3 rounded-lg font-medium hover:bg-emerald-700 cursor-pointer">+</button>
-          </form>
-        </div>
-      </div>
-
-      <!-- Kolom Midden/Rechts: Wedstrijd, Opstelling, Bank & Taken -->
-      <div class="md:col-span-2 space-y-6">
+      <!-- Kolom Midden/Rechts (Op mobiel bovenaan gezet via order-1) -->
+      <div class="md:col-span-2 space-y-6 order-1 md:order-2">
 
         <!-- Wedstrijd Details Card -->
         <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
@@ -104,37 +74,6 @@
             <div>
               <label class="block text-xs font-semibold text-slate-500 mb-1">Verzameltijd</label>
               <input type="time" id="meet-time" value="13:15" class="w-full p-2 border border-slate-300 rounded-lg">
-            </div>
-          </div>
-        </div>
-
-        <!-- Opstelling & Veld -->
-        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm uppercase tracking-wider">
-              <i class="fa-solid fa-chess-board text-emerald-600"></i> Opstelling & Bank
-            </h2>
-            <select id="formation-select" class="text-xs p-1.5 border border-slate-300 rounded-lg font-medium cursor-pointer">
-              <option value="4-3-3" selected>Formatie: 4-3-3</option>
-              <option value="4-4-2">Formatie: 4-4-2</option>
-            </select>
-          </div>
-
-          <!-- Voetbalveld Visualisatie -->
-          <div id="pitch" class="w-full h-[400px] rounded-lg p-3 flex flex-col justify-between relative overflow-hidden shadow-inner mb-4" style="background: linear-gradient(to bottom, #15803d, #166534); border: 2px solid rgba(255, 255, 255, 0.8);">
-            <div id="line-attack" class="flex justify-around items-center z-10 w-full min-h-[55px]" ondragover="allowDrop(event)" ondrop="dropToPosition(event, 'AANVALLER')"></div>
-            <div id="line-midfield" class="flex justify-around items-center z-10 w-full min-h-[55px]" ondragover="allowDrop(event)" ondrop="dropToPosition(event, 'MIDDENVELDER')"></div>
-            <div id="line-defense" class="flex justify-around items-center z-10 w-full min-h-[55px]" ondragover="allowDrop(event)" ondrop="dropToPosition(event, 'VERDEDIGER')"></div>
-            <div id="line-keeper" class="flex justify-center items-center z-10 w-full min-h-[55px]" ondragover="allowDrop(event)" ondrop="dropToPosition(event, 'KEEPER')"></div>
-          </div>
-
-          <!-- Reservebank -->
-          <div class="bg-slate-50 border border-slate-200 p-3 rounded-lg">
-            <h3 class="text-xs font-bold text-slate-600 uppercase mb-2 flex items-center gap-1.5">
-              <i class="fa-solid fa-bench-tree text-amber-600"></i> Reservebank / Niet opgesteld (<span id="bench-count">0</span>)
-            </h3>
-            <div id="bench-pool" class="flex flex-wrap gap-2 min-h-[45px] p-2 bg-white border border-dashed border-slate-300 rounded-md" ondragover="allowDrop(event)" ondrop="dropToBench(event)">
-              <!-- Dynamische reservebank spelers -->
             </div>
           </div>
         </div>
@@ -193,6 +132,38 @@
           </div>
         </div>
 
+        <!-- Opstelling & Veld -->
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+          <div class="flex justify-between items-center mb-2">
+            <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm uppercase tracking-wider">
+              <i class="fa-solid fa-chess-board text-emerald-600"></i> Opstelling & Bank
+            </h2>
+            <select id="formation-select" class="text-xs p-1.5 border border-slate-300 rounded-lg font-medium cursor-pointer">
+              <option value="4-3-3" selected>Formatie: 4-3-3</option>
+              <option value="4-4-2">Formatie: 4-4-2</option>
+            </select>
+          </div>
+          <p class="text-[11px] text-slate-500 mb-4 italic">💡 Tik op een speler op de bank om hem op het veld te zetten (of versleep hem). Tik op een speler in het veld om hem weer naar de bank te halen.</p>
+
+          <!-- Voetbalveld Visualisatie -->
+          <div id="pitch" class="w-full h-[400px] rounded-lg p-3 flex flex-col justify-between relative overflow-hidden shadow-inner mb-4" style="background: linear-gradient(to bottom, #15803d, #166534); border: 2px solid rgba(255, 255, 255, 0.8);">
+            <div id="line-attack" class="flex justify-around items-center z-10 w-full min-h-[55px]" ondragover="allowDrop(event)" ondrop="dropToPosition(event, 'AANVALLER')"></div>
+            <div id="line-midfield" class="flex justify-around items-center z-10 w-full min-h-[55px]" ondragover="allowDrop(event)" ondrop="dropToPosition(event, 'MIDDENVELDER')"></div>
+            <div id="line-defense" class="flex justify-around items-center z-10 w-full min-h-[55px]" ondragover="allowDrop(event)" ondrop="dropToPosition(event, 'VERDEDIGER')"></div>
+            <div id="line-keeper" class="flex justify-center items-center z-10 w-full min-h-[55px]" ondragover="allowDrop(event)" ondrop="dropToPosition(event, 'KEEPER')"></div>
+          </div>
+
+          <!-- Reservebank -->
+          <div class="bg-slate-50 border border-slate-200 p-3 rounded-lg">
+            <h3 class="text-xs font-bold text-slate-600 uppercase mb-2 flex items-center gap-1.5">
+              <i class="fa-solid fa-bench-tree text-amber-600"></i> Reservebank / Niet opgesteld (<span id="bench-count">0</span>)
+            </h3>
+            <div id="bench-pool" class="flex flex-wrap gap-2 min-h-[45px] p-2 bg-white border border-dashed border-slate-300 rounded-md" ondragover="allowDrop(event)" ondrop="dropToBench(event)">
+              <!-- Dynamische reservebank spelers -->
+            </div>
+          </div>
+        </div>
+
         <!-- WhatsApp Generator Button -->
         <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-3">
           <div>
@@ -204,6 +175,36 @@
           </button>
         </div>
 
+      </div>
+
+      <!-- Kolom Links: Vaste Selectie (Op mobiel onderaan gezet via order-2) -->
+      <div class="space-y-6 order-2 md:order-1">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+          <div class="flex justify-between items-center mb-3">
+            <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm uppercase tracking-wider">
+              <i class="fa-solid fa-users text-emerald-600"></i> Selectie (<span id="player-count">0</span>)
+            </h2>
+            <button id="btn-reset-players" class="text-[11px] text-emerald-600 hover:underline font-medium cursor-pointer">
+              Reset Aanwezigheid
+            </button>
+          </div>
+
+          <div id="player-list" class="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+            <!-- Dynamisch geladen -->
+          </div>
+
+          <!-- Extra gastspeler toevoegen -->
+          <form id="add-player-form" class="mt-4 pt-3 border-t border-slate-100 flex gap-2">
+            <input type="text" id="player-name" placeholder="+ Gastspeler" required class="w-full text-xs p-2 border border-slate-300 rounded-lg">
+            <select id="player-pos" class="text-xs p-2 border border-slate-300 rounded-lg">
+              <option value="KEEPER">K</option>
+              <option value="VERDEDIGER" selected>V</option>
+              <option value="MIDDENVELDER">M</option>
+              <option value="AANVALLER">A</option>
+            </select>
+            <button type="submit" class="bg-emerald-600 text-white text-xs px-3 rounded-lg font-medium hover:bg-emerald-700 cursor-pointer">+</button>
+          </form>
+        </div>
       </div>
 
     </div>
@@ -240,255 +241,4 @@
       location.reload();
     });
 
-    // Vaste selectie alfabetisch op voornaam
-    const defaultPlayers = [
-      { id: 1, name: 'Bram', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
-      { id: 2, name: 'Bryan', pos: 'AANVALLER', status: 'aanwezig', assignedPos: null },
-      { id: 3, name: 'Dennis', pos: 'MIDDENVELDER', status: 'aanwezig', assignedPos: null },
-      { id: 4, name: 'Erwin', pos: 'AANVALLER', status: 'aanwezig', assignedPos: null },
-      { id: 5, name: 'Jari', pos: 'AANVALLER', status: 'aanwezig', assignedPos: null },
-      { id: 6, name: 'Jordy', pos: 'MIDDENVELDER', status: 'aanwezig', assignedPos: null },
-      { id: 7, name: 'Julian', pos: 'MIDDENVELDER', status: 'aanwezig', assignedPos: null },
-      { id: 8, name: 'Jur', pos: 'AANVALLER', status: 'aanwezig', assignedPos: null },
-      { id: 9, name: 'Lars Bosch', pos: 'AANVALLER', status: 'aanwezig', assignedPos: null },
-      { id: 10, name: 'Lars Rijstenberg', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
-      { id: 11, name: 'Leon', pos: 'AANVALLER', status: 'aanwezig', assignedPos: null },
-      { id: 12, name: 'Levi', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
-      { id: 13, name: 'Marnix', pos: 'MIDDENVELDER', status: 'aanwezig', assignedPos: null },
-      { id: 14, name: 'Mark', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
-      { id: 15, name: 'Nic', pos: 'MIDDENVELDER', status: 'aanwezig', assignedPos: null },
-      { id: 16, name: 'Pouwel', pos: 'AANVALLER', status: 'aanwezig', assignedPos: null },
-      { id: 17, name: 'Rinse', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
-      { id: 18, name: 'Robbie', pos: 'MIDDENVELDER', status: 'aanwezig', assignedPos: null },
-      { id: 19, name: 'Steffen', pos: 'KEEPER', status: 'aanwezig', assignedPos: null },
-      { id: 20, name: 'Steven', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
-      { id: 21, name: 'Troy', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
-      { id: 22, name: 'Twan', pos: 'MIDDENVELDER', status: 'aanwezig', assignedPos: null }
-    ];
-
-    let players = JSON.parse(localStorage.getItem('team_players_v4')) || defaultPlayers;
-    let tasks = JSON.parse(localStorage.getItem('team_tasks_v4')) || { wash: [], corvee: [], drivers: [], gang: [], fluit_jongens: [], fluit_meiden: [] };
-
-    function saveData() {
-      localStorage.setItem('team_players_v4', JSON.stringify(players));
-      localStorage.setItem('team_tasks_v4', JSON.stringify(tasks));
-      renderList();
-      renderPitchAndBench();
-      renderTasks();
-    }
-
-    function renderList() {
-      const listEl = document.getElementById('player-list');
-      const countEl = document.getElementById('player-count');
-      if (!listEl) return;
-      listEl.innerHTML = '';
-      
-      const actieveSpelers = players.filter(p => p.status === 'aanwezig').length;
-      countEl.innerText = `${actieveSpelers}/${players.length}`;
-
-      players.forEach(p => {
-        const item = document.createElement('div');
-        const isAfwezig = p.status !== 'aanwezig';
-        
-        item.className = `flex items-center justify-between p-2 rounded-lg border text-sm ${isAfwezig ? 'bg-slate-100 border-slate-200 text-slate-400 line-through' : 'bg-slate-50 border-slate-200 text-slate-800'}`;
-
-        item.innerHTML = `
-          <div class="flex items-center gap-2">
-            <span class="font-medium">${p.name}</span>
-            <span class="text-[10px] text-slate-400 no-underline uppercase font-bold">(${p.pos[0]})</span>
-          </div>
-          <select onchange="updateStatus(${p.id}, this.value)" class="text-xs p-1 rounded border bg-white text-slate-700 font-medium no-underline cursor-pointer">
-            <option value="aanwezig" ${p.status === 'aanwezig' ? 'selected' : ''}>Aanwezig</option>
-            <option value="afwezig" ${p.status === 'afwezig' ? 'selected' : ''}>Afwezig</option>
-            <option value="geblesseerd" ${p.status === 'geblesseerd' ? 'selected' : ''}>Geblesseerd</option>
-          </select>
-        `;
-        listEl.appendChild(item);
-      });
-    }
-
-    window.updateStatus = function(id, newStatus) {
-      players = players.map(p => {
-        if (p.id === id) {
-          return { ...p, status: newStatus, assignedPos: newStatus !== 'aanwezig' ? null : p.assignedPos };
-        }
-        return p;
-      });
-      saveData();
-    };
-
-    document.getElementById('btn-reset-players').addEventListener('click', () => {
-      players = players.map(p => ({ ...p, status: 'aanwezig', assignedPos: null }));
-      saveData();
-    });
-
-    document.getElementById('add-player-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const nameInput = document.getElementById('player-name');
-      const posInput = document.getElementById('player-pos');
-
-      if(nameInput && nameInput.value) {
-        players.push({
-          id: Date.now(),
-          name: nameInput.value,
-          pos: posInput.value,
-          status: 'aanwezig',
-          assignedPos: null
-        });
-        nameInput.value = '';
-        saveData();
-      }
-    });
-
-    // --- SLEEP & OPSTELLING LOGICA ---
-    function renderPitchAndBench() {
-      const activePlayers = players.filter(p => p.status === 'aanwezig');
-      
-      const lines = {
-        KEEPER: document.getElementById('line-keeper'),
-        VERDEDIGER: document.getElementById('line-defense'),
-        MIDDENVELDER: document.getElementById('line-midfield'),
-        AANVALLER: document.getElementById('line-attack')
-      };
-
-      Object.values(lines).forEach(el => { if(el) el.innerHTML = ''; });
-      const benchPool = document.getElementById('bench-pool');
-      benchPool.innerHTML = '';
-
-      let benchCount = 0;
-
-      activePlayers.forEach(p => {
-        const pEl = document.createElement('div');
-        pEl.className = 'draggable-item flex flex-col items-center bg-slate-900/70 hover:bg-slate-900 text-white px-2 py-1 rounded shadow cursor-grab';
-        pEl.draggable = true;
-        pEl.ondragstart = (e) => e.dataTransfer.setData('text/plain', p.id);
-        
-        pEl.innerHTML = `
-          <div class="w-6 h-6 rounded-full bg-amber-400 border border-white flex items-center justify-center font-bold text-xs text-slate-900">
-            ${p.name[0]}
-          </div>
-          <span class="text-[10px] font-bold mt-0.5 max-w-[60px] truncate text-center">${p.name}</span>
-        `;
-
-        if (p.assignedPos && lines[p.assignedPos]) {
-          lines[p.assignedPos].appendChild(pEl);
-        } else {
-          benchCount++;
-          const benchCard = document.createElement('div');
-          benchCard.className = 'draggable-item bg-white border border-slate-300 text-slate-800 px-2.5 py-1 rounded-md text-xs font-medium shadow-sm flex items-center gap-1.5 cursor-grab hover:bg-slate-50';
-          benchCard.draggable = true;
-          benchCard.ondragstart = (e) => e.dataTransfer.setData('text/plain', p.id);
-          benchCard.innerHTML = `<i class="fa-solid fa-grip-vertical text-slate-400 text-[10px]"></i> ${p.name} <span class="text-[10px] text-slate-400 uppercase font-bold">(${p.pos[0]})</span>`;
-          benchPool.appendChild(benchCard);
-        }
-      });
-
-      document.getElementById('bench-count').innerText = benchCount;
-    }
-
-    window.allowDrop = function(ev) {
-      ev.preventDefault();
-    }
-
-    window.dropToPosition = function(ev, posName) {
-      ev.preventDefault();
-      const playerId = parseInt(ev.dataTransfer.getData('text/plain'));
-      players = players.map(p => p.id === playerId ? { ...p, assignedPos: posName } : p);
-      saveData();
-    }
-
-    window.dropToBench = function(ev) {
-      ev.preventDefault();
-      const playerId = parseInt(ev.dataTransfer.getData('text/plain'));
-      players = players.map(p => p.id === playerId ? { ...p, assignedPos: null } : p);
-      saveData();
-    }
-
-    // --- TAKEN & TAGS SYSTEEM ---
-    window.addTag = function(event, taskKey) {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        const val = event.target.value.trim();
-        if (val) {
-          tasks[taskKey].push(val);
-          event.target.value = '';
-          saveData();
-        }
-      }
-    }
-
-    window.removeTag = function(taskKey, index) {
-      tasks[taskKey].splice(index, 1);
-      saveData();
-    }
-
-    function renderTasks() {
-      ['wash', 'corvee', 'drivers', 'gang', 'fluit_jongens', 'fluit_meiden'].forEach(key => {
-        const container = document.getElementById(`tags-${key}`);
-        if (!container) return;
-        container.innerHTML = '';
-        
-        tasks[key].forEach((item, index) => {
-          const tag = document.createElement('span');
-          tag.className = 'inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded-full font-medium';
-          tag.innerHTML = `${item} <button type="button" onclick="removeTag('${key}', ${index})" class="hover:text-rose-600 ml-0.5 cursor-pointer"><i class="fa-solid fa-xmark text-[10px]"></i></button>`;
-          container.appendChild(tag);
-        });
-      });
-    }
-
-    // --- WHATSAPP GENERATOR ---
-    document.getElementById('btn-copy-whatsapp').addEventListener('click', () => {
-      const opponent = document.getElementById('match-opponent').value || '-';
-      const matchType = document.getElementById('match-type').value || '-';
-      const matchTime = document.getElementById('match-time').value || '-';
-      const meetTime = document.getElementById('meet-time').value || '-';
-
-      const formatTask = (arr) => arr.length > 0 ? arr.join(', ') : 'Nog indelen';
-
-      const wash = formatTask(tasks.wash);
-      const corvee = formatTask(tasks.corvee);
-      const drivers = formatTask(tasks.drivers);
-      const gang = formatTask(tasks.gang);
-
-      const fluitJongensNamen = formatTask(tasks.fluit_jongens);
-      const fluitJongensTijd = document.getElementById('tijd-jongens').value;
-      const fluitJongensTekst = tasks.fluit_jongens.length > 0 ? `${fluitJongensNamen} ${fluitJongensTijd ? '(' + fluitJongensTijd + ')' : ''}` : 'N.v.t.';
-
-      const fluitMeidenNamen = formatTask(tasks.fluit_meiden);
-      const fluitMeidenTijd = document.getElementById('tijd-meiden').value;
-      const fluitMeidenTekst = tasks.fluit_meiden.length > 0 ? `${fluitMeidenNamen} ${fluitMeidenTijd ? '(' + fluitMeidenTijd + ')' : ''}` : 'N.v.t.';
-
-      const aanwezig = players.filter(p => p.status === 'aanwezig').map(p => p.name).join(', ');
-      const afwezig = players.filter(p => p.status !== 'aanwezig').map(p => `${p.name} (${p.status})`).join(', ');
-
-      const text = `⚽ *WEDSTRIJD INFORMATIE* ⚽\n` +
-        `--------------------------------\n` +
-        `🆚 *Tegenstander:* ${opponent} (${matchType})\n` +
-        `⏰ *Aanvang:* ${matchTime} uur\n` +
-        `📍 *Verzamelen:* ${meetTime} uur\n\n` +
-        `📋 *TAKEN DEZE WEEK:*\n` +
-        `🧺 *Wassen:* ${wash}\n` +
-        `🧹 *Corvee:* ${corvee}\n` +
-        `🚗 *Rijders:* ${drivers}\n` +
-        `🧹 *Gangen Vegen:* ${gang}\n` +
-        `🚩 *Fluiten Jongens:* ${fluitJongensTekst}\n` +
-        `🚩 *Fluiten Meiden:* ${fluitMeidenTekst}\n\n` +
-        `✅ *Aanwezig:* ${aanwezig || 'Niemand'}\n` +
-        `❌ *Afwezig/Geblesseerd:* ${afwezig || 'Niemand'}\n\n` +
-        `Tot de wedstrijd! ⚽🔥`;
-
-      navigator.clipboard.writeText(text).then(() => {
-        alert('WhatsApp bericht is gekopieerd!');
-      }).catch(() => {
-        alert('Kopiëren mislukt. Controleer je browserrechten.');
-      });
-    });
-
-    // Init
-    renderList();
-    renderPitchAndBench();
-    renderTasks();
-  </script>
-</body>
-</html>
+    // Vaste selectie
