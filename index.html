@@ -6,6 +6,10 @@
   <title>TeamManager Pro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .draggable-item { cursor: grab; }
+    .draggable-item:active { cursor: grabbing; }
+  </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-800 pb-12">
 
@@ -16,7 +20,7 @@
         <i class="fa-solid fa-lock"></i>
       </div>
       <h2 class="text-xl font-bold text-slate-800">Team Toegang</h2>
-      <p class="text-xs text-slate-500">Voer de teampincode in om toegang te krijgen tot de team-pagina.</p>
+      <p class="text-xs text-slate-500">Voer de teampincode in om toegang te krijgen.</p>
       
       <form id="pin-form" class="space-y-3">
         <input type="password" id="pin-input" placeholder="Pincode" maxlength="4" autofocus required class="w-full text-center text-2xl tracking-widest p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
@@ -31,7 +35,7 @@
     
     <!-- Header -->
     <header class="bg-emerald-700 text-white shadow-md">
-      <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
         <h1 class="text-xl md:text-2xl font-bold flex items-center gap-2">
           <i class="fa-solid fa-futbol"></i> TeamManager Pro
         </h1>
@@ -41,7 +45,7 @@
       </div>
     </header>
 
-    <div class="max-w-4xl mx-auto px-4 mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="max-w-5xl mx-auto px-4 mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
 
       <!-- Kolom Links: Vaste Selectie -->
       <div class="space-y-6">
@@ -55,13 +59,13 @@
             </button>
           </div>
 
-          <div id="player-list" class="space-y-2 max-h-[460px] overflow-y-auto pr-1">
+          <div id="player-list" class="space-y-2 max-h-[500px] overflow-y-auto pr-1">
             <!-- Dynamisch geladen -->
           </div>
 
-          <!-- Extra speler incidenteel toevoegen -->
+          <!-- Extra gastspeler toevoegen -->
           <form id="add-player-form" class="mt-4 pt-3 border-t border-slate-100 flex gap-2">
-            <input type="text" id="player-name" placeholder="+ Extra speler" required class="w-full text-xs p-2 border border-slate-300 rounded-lg">
+            <input type="text" id="player-name" placeholder="+ Gastspeler" required class="w-full text-xs p-2 border border-slate-300 rounded-lg">
             <select id="player-pos" class="text-xs p-2 border border-slate-300 rounded-lg">
               <option value="KEEPER">K</option>
               <option value="VERDEDIGER" selected>V</option>
@@ -73,7 +77,7 @@
         </div>
       </div>
 
-      <!-- Kolom Midden/Rechts: Wedstrijd, Opstelling & Taken -->
+      <!-- Kolom Midden/Rechts: Wedstrijd, Opstelling, Bank & Taken -->
       <div class="md:col-span-2 space-y-6">
 
         <!-- Wedstrijd Details Card -->
@@ -104,11 +108,11 @@
           </div>
         </div>
 
-        <!-- Opstelling op het veld -->
+        <!-- Opstelling & Veld -->
         <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
           <div class="flex justify-between items-center mb-4">
             <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm uppercase tracking-wider">
-              <i class="fa-solid fa-chess-board text-emerald-600"></i> Opstelling
+              <i class="fa-solid fa-chess-board text-emerald-600"></i> Opstelling & Bank
             </h2>
             <select id="formation-select" class="text-xs p-1.5 border border-slate-300 rounded-lg font-medium cursor-pointer">
               <option value="4-3-3" selected>Formatie: 4-3-3</option>
@@ -117,54 +121,73 @@
           </div>
 
           <!-- Voetbalveld Visualisatie -->
-          <div class="w-full h-[380px] rounded-lg p-3 flex flex-col justify-between relative overflow-hidden shadow-inner" style="background: linear-gradient(to bottom, #15803d, #166534); border: 2px solid rgba(255, 255, 255, 0.8);">
-            <!-- Linies op het veld -->
-            <div id="line-attack" class="flex justify-around items-center z-10 w-full min-h-[50px]"></div>
-            <div id="line-midfield" class="flex justify-around items-center z-10 w-full min-h-[50px]"></div>
-            <div id="line-defense" class="flex justify-around items-center z-10 w-full min-h-[50px]"></div>
-            <div id="line-keeper" class="flex justify-center items-center z-10 w-full min-h-[50px]"></div>
+          <div id="pitch" class="w-full h-[400px] rounded-lg p-3 flex flex-col justify-between relative overflow-hidden shadow-inner mb-4" style="background: linear-gradient(to bottom, #15803d, #166534); border: 2px solid rgba(255, 255, 255, 0.8);">
+            <div id="line-attack" class="flex justify-around items-center z-10 w-full min-h-[55px]" ondragover="allowDrop(event)" ondrop="dropToPosition(event, 'AANVALLER')"></div>
+            <div id="line-midfield" class="flex justify-around items-center z-10 w-full min-h-[55px]" ondragover="allowDrop(event)" ondrop="dropToPosition(event, 'MIDDENVELDER')"></div>
+            <div id="line-defense" class="flex justify-around items-center z-10 w-full min-h-[55px]" ondragover="allowDrop(event)" ondrop="dropToPosition(event, 'VERDEDIGER')"></div>
+            <div id="line-keeper" class="flex justify-center items-center z-10 w-full min-h-[55px]" ondragover="allowDrop(event)" ondrop="dropToPosition(event, 'KEEPER')"></div>
+          </div>
+
+          <!-- Reservebank -->
+          <div class="bg-slate-50 border border-slate-200 p-3 rounded-lg">
+            <h3 class="text-xs font-bold text-slate-600 uppercase mb-2 flex items-center gap-1.5">
+              <i class="fa-solid fa-bench-tree text-amber-600"></i> Reservebank / Niet opgesteld (<span id="bench-count">0</span>)
+            </h3>
+            <div id="bench-pool" class="flex flex-wrap gap-2 min-h-[45px] p-2 bg-white border border-dashed border-slate-300 rounded-md" ondragover="allowDrop(event)" ondrop="dropToBench(event)">
+              <!-- Dynamische reservebank spelers -->
+            </div>
           </div>
         </div>
 
-        <!-- Teamtaken -->
+        <!-- Teamtaken met Tags -->
         <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4">
           <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm uppercase tracking-wider">
             <i class="fa-solid fa-list-check text-emerald-600"></i> Taken van de Week
           </h2>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <!-- Wassen -->
             <div>
-              <label class="block text-xs font-semibold text-slate-500 mb-1"><i class="fa-solid fa-shirt text-emerald-600 mr-1"></i> Wassen</label>
-              <input type="text" id="task-wash" placeholder="Naam speler" class="w-full p-2 border border-slate-300 rounded-lg">
+              <label class="block text-xs font-semibold text-slate-500 mb-1">🧺 Wassen</label>
+              <div id="tags-wash" class="flex flex-wrap gap-1.5 mb-1.5"></div>
+              <input type="text" placeholder="Typ naam + Enter" onkeydown="addTag(event, 'wash')" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg">
             </div>
+            <!-- Corvee -->
             <div>
-              <label class="block text-xs font-semibold text-slate-500 mb-1"><i class="fa-solid fa-broom text-emerald-600 mr-1"></i> Corvee</label>
-              <input type="text" id="task-corvee" placeholder="Naam speler(s)" class="w-full p-2 border border-slate-300 rounded-lg">
+              <label class="block text-xs font-semibold text-slate-500 mb-1">🧹 Corvee</label>
+              <div id="tags-corvee" class="flex flex-wrap gap-1.5 mb-1.5"></div>
+              <input type="text" placeholder="Typ naam + Enter" onkeydown="addTag(event, 'corvee')" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg">
             </div>
+            <!-- Rijden -->
             <div>
-              <label class="block text-xs font-semibold text-slate-500 mb-1"><i class="fa-solid fa-car text-emerald-600 mr-1"></i> Rijden</label>
-              <input type="text" id="task-drivers" placeholder="Namen rijders" class="w-full p-2 border border-slate-300 rounded-lg">
+              <label class="block text-xs font-semibold text-slate-500 mb-1">🚗 Rijden</label>
+              <div id="tags-drivers" class="flex flex-wrap gap-1.5 mb-1.5"></div>
+              <input type="text" placeholder="Typ naam + Enter" onkeydown="addTag(event, 'drivers')" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg">
             </div>
+            <!-- Gangen Vegen -->
             <div>
-              <label class="block text-xs font-semibold text-slate-500 mb-1"><i class="fa-solid fa-person-digging text-emerald-600 mr-1"></i> Gangen Vegen</label>
-              <input type="text" id="task-gang" placeholder="Naam speler" class="w-full p-2 border border-slate-300 rounded-lg">
+              <label class="block text-xs font-semibold text-slate-500 mb-1">🧹 Gangen Vegen</label>
+              <div id="tags-gang" class="flex flex-wrap gap-1.5 mb-1.5"></div>
+              <input type="text" placeholder="Typ naam + Enter" onkeydown="addTag(event, 'gang')" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg">
             </div>
           </div>
 
-          <!-- Fluiten taken met variabele tijd -->
-          <div class="pt-2 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <!-- Fluiten taken met tijd -->
+          <div class="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
-              <label class="block text-xs font-semibold text-slate-500 mb-1"><i class="fa-solid fa-whistle text-emerald-600 mr-1"></i> Fluiten Jongens</label>
+              <label class="block text-xs font-semibold text-slate-500 mb-1">🚩 Fluiten Jongens</label>
+              <div id="tags-fluit_jongens" class="flex flex-wrap gap-1.5 mb-1.5"></div>
               <div class="flex gap-2">
-                <input type="text" id="fluit-jongens-naam" placeholder="Wie fluit?" class="w-2/3 p-2 border border-slate-300 rounded-lg">
-                <input type="time" id="fluit-jongens-tijd" class="w-1/3 p-2 border border-slate-300 rounded-lg text-xs">
+                <input type="text" placeholder="Naam + Enter" onkeydown="addTag(event, 'fluit_jongens')" class="w-2/3 p-1.5 text-xs border border-slate-300 rounded-lg">
+                <input type="time" id="tijd-jongens" class="w-1/3 p-1.5 text-xs border border-slate-300 rounded-lg">
               </div>
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-500 mb-1"><i class="fa-solid fa-whistle text-emerald-600 mr-1"></i> Fluiten Meiden</label>
+              <label class="block text-xs font-semibold text-slate-500 mb-1">🚩 Fluiten Meiden</label>
+              <div id="tags-fluit_meiden" class="flex flex-wrap gap-1.5 mb-1.5"></div>
               <div class="flex gap-2">
-                <input type="text" id="fluit-meiden-naam" placeholder="Wie fluit?" class="w-2/3 p-2 border border-slate-300 rounded-lg">
-                <input type="time" id="fluit-meiden-tijd" class="w-1/3 p-2 border border-slate-300 rounded-lg text-xs">
+                <input type="text" placeholder="Naam + Enter" onkeydown="addTag(event, 'fluit_meiden')" class="w-2/3 p-1.5 text-xs border border-slate-300 rounded-lg">
+                <input type="time" id="tijd-meiden" class="w-1/3 p-1.5 text-xs border border-slate-300 rounded-lg">
               </div>
             </div>
           </div>
@@ -187,7 +210,6 @@
   </div>
 
   <script>
-    // --- PINCODE BEVEILIGING (1962) ---
     const CORRECT_PIN = "1962";
     const pinOverlay = document.getElementById('pin-overlay');
     const appContent = document.getElementById('app-content');
@@ -218,30 +240,41 @@
       location.reload();
     });
 
-    // --- VASTE SPELERSSELECTIE ---
+    // Vaste selectie alfabetisch op voornaam
     const defaultPlayers = [
-      { id: 1, name: 'Daan', pos: 'KEEPER', status: 'aanwezig' },
-      { id: 2, name: 'Lars', pos: 'VERDEDIGER', status: 'aanwezig' },
-      { id: 3, name: 'Sven', pos: 'VERDEDIGER', status: 'aanwezig' },
-      { id: 4, name: 'Milan', pos: 'VERDEDIGER', status: 'aanwezig' },
-      { id: 5, name: 'Bram', pos: 'VERDEDIGER', status: 'aanwezig' },
-      { id: 6, name: 'Luuk', pos: 'MIDDENVELDER', status: 'aanwezig' },
-      { id: 7, name: 'Finn', pos: 'MIDDENVELDER', status: 'aanwezig' },
-      { id: 8, name: 'Jesse', pos: 'MIDDENVELDER', status: 'aanwezig' },
-      { id: 9, name: 'Sem', pos: 'AANVALLER', status: 'aanwezig' },
-      { id: 10, name: 'Thomas', pos: 'AANVALLER', status: 'aanwezig' },
-      { id: 11, name: 'Stijn', pos: 'AANVALLER', status: 'aanwezig' },
-      { id: 12, name: 'Ruben', pos: 'VERDEDIGER', status: 'aanwezig' },
-      { id: 13, name: 'Niek', pos: 'MIDDENVELDER', status: 'aanwezig' },
-      { id: 14, name: 'Thijs', pos: 'AANVALLER', status: 'aanwezig' }
+      { id: 1, name: 'Bram', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
+      { id: 2, name: 'Bryan', pos: 'AANVALLER', status: 'aanwezig', assignedPos: null },
+      { id: 3, name: 'Dennis', pos: 'MIDDENVELDER', status: 'aanwezig', assignedPos: null },
+      { id: 4, name: 'Erwin', pos: 'AANVALLER', status: 'aanwezig', assignedPos: null },
+      { id: 5, name: 'Jari', pos: 'AANVALLER', status: 'aanwezig', assignedPos: null },
+      { id: 6, name: 'Jordy', pos: 'MIDDENVELDER', status: 'aanwezig', assignedPos: null },
+      { id: 7, name: 'Julian', pos: 'MIDDENVELDER', status: 'aanwezig', assignedPos: null },
+      { id: 8, name: 'Jur', pos: 'AANVALLER', status: 'aanwezig', assignedPos: null },
+      { id: 9, name: 'Lars Bosch', pos: 'AANVALLER', status: 'aanwezig', assignedPos: null },
+      { id: 10, name: 'Lars Rijstenberg', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
+      { id: 11, name: 'Leon', pos: 'AANVALLER', status: 'aanwezig', assignedPos: null },
+      { id: 12, name: 'Levi', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
+      { id: 13, name: 'Marnix', pos: 'MIDDENVELDER', status: 'aanwezig', assignedPos: null },
+      { id: 14, name: 'Mark', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
+      { id: 15, name: 'Nic', pos: 'MIDDENVELDER', status: 'aanwezig', assignedPos: null },
+      { id: 16, name: 'Pouwel', pos: 'AANVALLER', status: 'aanwezig', assignedPos: null },
+      { id: 17, name: 'Rinse', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
+      { id: 18, name: 'Robbie', pos: 'MIDDENVELDER', status: 'aanwezig', assignedPos: null },
+      { id: 19, name: 'Steffen', pos: 'KEEPER', status: 'aanwezig', assignedPos: null },
+      { id: 20, name: 'Steven', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
+      { id: 21, name: 'Troy', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
+      { id: 22, name: 'Twan', pos: 'MIDDENVELDER', status: 'aanwezig', assignedPos: null }
     ];
 
-    let players = JSON.parse(localStorage.getItem('team_players_v3')) || defaultPlayers;
+    let players = JSON.parse(localStorage.getItem('team_players_v4')) || defaultPlayers;
+    let tasks = JSON.parse(localStorage.getItem('team_tasks_v4')) || { wash: [], corvee: [], drivers: [], gang: [], fluit_jongens: [], fluit_meiden: [] };
 
-    function savePlayers() {
-      localStorage.setItem('team_players_v3', JSON.stringify(players));
+    function saveData() {
+      localStorage.setItem('team_players_v4', JSON.stringify(players));
+      localStorage.setItem('team_tasks_v4', JSON.stringify(tasks));
       renderList();
-      renderPitch();
+      renderPitchAndBench();
+      renderTasks();
     }
 
     function renderList() {
@@ -275,13 +308,18 @@
     }
 
     window.updateStatus = function(id, newStatus) {
-      players = players.map(p => p.id === id ? { ...p, status: newStatus } : p);
-      savePlayers();
+      players = players.map(p => {
+        if (p.id === id) {
+          return { ...p, status: newStatus, assignedPos: newStatus !== 'aanwezig' ? null : p.assignedPos };
+        }
+        return p;
+      });
+      saveData();
     };
 
     document.getElementById('btn-reset-players').addEventListener('click', () => {
-      players = players.map(p => ({ ...p, status: 'aanwezig' }));
-      savePlayers();
+      players = players.map(p => ({ ...p, status: 'aanwezig', assignedPos: null }));
+      saveData();
     });
 
     document.getElementById('add-player-form').addEventListener('submit', (e) => {
@@ -294,17 +332,17 @@
           id: Date.now(),
           name: nameInput.value,
           pos: posInput.value,
-          status: 'aanwezig'
+          status: 'aanwezig',
+          assignedPos: null
         });
         nameInput.value = '';
-        savePlayers();
+        saveData();
       }
     });
 
-    // --- VELD WEERGAVE (4-3-3 / 4-4-2 logica) ---
-    function renderPitch() {
+    // --- SLEEP & OPSTELLING LOGICA ---
+    function renderPitchAndBench() {
       const activePlayers = players.filter(p => p.status === 'aanwezig');
-      const formation = document.getElementById('formation-select')?.value || '4-3-3';
       
       const lines = {
         KEEPER: document.getElementById('line-keeper'),
@@ -314,44 +352,112 @@
       };
 
       Object.values(lines).forEach(el => { if(el) el.innerHTML = ''; });
+      const benchPool = document.getElementById('bench-pool');
+      benchPool.innerHTML = '';
 
-      // Eventueel posities aanpassen o.b.v. formatie (voor 4-4-2 kunnen we evt aanvallers/middenvelders flexibel indelen, behouden we de basisopstelling)
+      let benchCount = 0;
+
       activePlayers.forEach(p => {
         const pEl = document.createElement('div');
-        pEl.className = 'flex flex-col items-center';
+        pEl.className = 'draggable-item flex flex-col items-center bg-slate-900/70 hover:bg-slate-900 text-white px-2 py-1 rounded shadow cursor-grab';
+        pEl.draggable = true;
+        pEl.ondragstart = (e) => e.dataTransfer.setData('text/plain', p.id);
+        
         pEl.innerHTML = `
-          <div class="w-7 h-7 rounded-full bg-amber-400 border-2 border-white shadow flex items-center justify-center font-bold text-xs text-slate-900">
+          <div class="w-6 h-6 rounded-full bg-amber-400 border border-white flex items-center justify-center font-bold text-xs text-slate-900">
             ${p.name[0]}
           </div>
-          <span class="text-[10px] font-bold text-white bg-slate-900/70 px-1 rounded mt-0.5 max-w-[65px] truncate text-center">${p.name}</span>
+          <span class="text-[10px] font-bold mt-0.5 max-w-[60px] truncate text-center">${p.name}</span>
         `;
-        if (lines[p.pos]) {
-          lines[p.pos].appendChild(pEl);
+
+        if (p.assignedPos && lines[p.assignedPos]) {
+          lines[p.assignedPos].appendChild(pEl);
+        } else {
+          benchCount++;
+          const benchCard = document.createElement('div');
+          benchCard.className = 'draggable-item bg-white border border-slate-300 text-slate-800 px-2.5 py-1 rounded-md text-xs font-medium shadow-sm flex items-center gap-1.5 cursor-grab hover:bg-slate-50';
+          benchCard.draggable = true;
+          benchCard.ondragstart = (e) => e.dataTransfer.setData('text/plain', p.id);
+          benchCard.innerHTML = `<i class="fa-solid fa-grip-vertical text-slate-400 text-[10px]"></i> ${p.name} <span class="text-[10px] text-slate-400 uppercase font-bold">(${p.pos[0]})</span>`;
+          benchPool.appendChild(benchCard);
         }
+      });
+
+      document.getElementById('bench-count').innerText = benchCount;
+    }
+
+    window.allowDrop = function(ev) {
+      ev.preventDefault();
+    }
+
+    window.dropToPosition = function(ev, posName) {
+      ev.preventDefault();
+      const playerId = parseInt(ev.dataTransfer.getData('text/plain'));
+      players = players.map(p => p.id === playerId ? { ...p, assignedPos: posName } : p);
+      saveData();
+    }
+
+    window.dropToBench = function(ev) {
+      ev.preventDefault();
+      const playerId = parseInt(ev.dataTransfer.getData('text/plain'));
+      players = players.map(p => p.id === playerId ? { ...p, assignedPos: null } : p);
+      saveData();
+    }
+
+    // --- TAKEN & TAGS SYSTEEM ---
+    window.addTag = function(event, taskKey) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        const val = event.target.value.trim();
+        if (val) {
+          tasks[taskKey].push(val);
+          event.target.value = '';
+          saveData();
+        }
+      }
+    }
+
+    window.removeTag = function(taskKey, index) {
+      tasks[taskKey].splice(index, 1);
+      saveData();
+    }
+
+    function renderTasks() {
+      ['wash', 'corvee', 'drivers', 'gang', 'fluit_jongens', 'fluit_meiden'].forEach(key => {
+        const container = document.getElementById(`tags-${key}`);
+        if (!container) return;
+        container.innerHTML = '';
+        
+        tasks[key].forEach((item, index) => {
+          const tag = document.createElement('span');
+          tag.className = 'inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded-full font-medium';
+          tag.innerHTML = `${item} <button type="button" onclick="removeTag('${key}', ${index})" class="hover:text-rose-600 ml-0.5 cursor-pointer"><i class="fa-solid fa-xmark text-[10px]"></i></button>`;
+          container.appendChild(tag);
+        });
       });
     }
 
-    document.getElementById('formation-select').addEventListener('change', renderPitch);
-
-    // --- WHATSAPP BERICHT GENERATIE ---
+    // --- WHATSAPP GENERATOR ---
     document.getElementById('btn-copy-whatsapp').addEventListener('click', () => {
       const opponent = document.getElementById('match-opponent').value || '-';
       const matchType = document.getElementById('match-type').value || '-';
       const matchTime = document.getElementById('match-time').value || '-';
       const meetTime = document.getElementById('meet-time').value || '-';
 
-      const wash = document.getElementById('task-wash').value || 'Nog indelen';
-      const corvee = document.getElementById('task-corvee').value || 'Nog indelen';
-      const drivers = document.getElementById('task-drivers').value || 'Nog indelen';
-      const gang = document.getElementById('task-gang').value || 'Nog indelen';
+      const formatTask = (arr) => arr.length > 0 ? arr.join(', ') : 'Nog indelen';
 
-      const fluitJongensNaam = document.getElementById('fluit-jongens-naam').value;
-      const fluitJongensTijd = document.getElementById('fluit-jongens-tijd').value;
-      const fluitMeidenNaam = document.getElementById('fluit-meiden-naam').value;
-      const fluitMeidenTijd = document.getElementById('fluit-meiden-tijd').value;
+      const wash = formatTask(tasks.wash);
+      const corvee = formatTask(tasks.corvee);
+      const drivers = formatTask(tasks.drivers);
+      const gang = formatTask(tasks.gang);
 
-      const fluitJongensTekst = fluitJongensNaam ? `${fluitJongensNaam} ${fluitJongensTijd ? '(' + fluitJongensTijd + ')' : ''}` : 'N.v.t.';
-      const fluitMeidenTekst = fluitMeidenNaam ? `${fluitMeidenNaam} ${fluitMeidenTijd ? '(' + fluitMeidenTijd + ')' : ''}` : 'N.v.t.';
+      const fluitJongensNamen = formatTask(tasks.fluit_jongens);
+      const fluitJongensTijd = document.getElementById('tijd-jongens').value;
+      const fluitJongensTekst = tasks.fluit_jongens.length > 0 ? `${fluitJongensNamen} ${fluitJongensTijd ? '(' + fluitJongensTijd + ')' : ''}` : 'N.v.t.';
+
+      const fluitMeidenNamen = formatTask(tasks.fluit_meiden);
+      const fluitMeidenTijd = document.getElementById('tijd-meiden').value;
+      const fluitMeidenTekst = tasks.fluit_meiden.length > 0 ? `${fluitMeidenNamen} ${fluitMeidenTijd ? '(' + fluitMeidenTijd + ')' : ''}` : 'N.v.t.';
 
       const aanwezig = players.filter(p => p.status === 'aanwezig').map(p => p.name).join(', ');
       const afwezig = players.filter(p => p.status !== 'aanwezig').map(p => `${p.name} (${p.status})`).join(', ');
@@ -373,15 +479,16 @@
         `Tot de wedstrijd! ⚽🔥`;
 
       navigator.clipboard.writeText(text).then(() => {
-        alert('Het volledige WhatsApp bericht is gekopieerd naar je klembord!');
+        alert('WhatsApp bericht is gekopieerd!');
       }).catch(() => {
-        alert('Kopiëren mislukt. Controleer of je browser toegang heeft tot het klembord.');
+        alert('Kopiëren mislukt. Controleer je browserrechten.');
       });
     });
 
     // Init
     renderList();
-    renderPitch();
+    renderPitchAndBench();
+    renderTasks();
   </script>
 </body>
 </html>
