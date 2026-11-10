@@ -15,25 +15,8 @@
 </head>
 <body class="bg-slate-100 font-sans text-slate-800 pb-12">
 
-  <!-- PINCODE INLOGSCHERM -->
-  <div id="pin-overlay" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-50 p-4">
-    <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full text-center space-y-4">
-      <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl">
-        <i class="fa-solid fa-lock"></i>
-      </div>
-      <h2 class="text-xl font-bold text-slate-800">Team Toegang</h2>
-      <p class="text-xs text-slate-500">Voer de teampincode in om toegang te krijgen.</p>
-      
-      <form id="pin-form" class="space-y-3">
-        <input type="password" id="pin-input" placeholder="Pincode" maxlength="4" autofocus required class="w-full text-center text-2xl tracking-widest p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-        <p id="pin-error" class="text-xs text-rose-500 font-medium hidden">Onjuiste pincode, probeer opnieuw.</p>
-        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-lg transition cursor-pointer">Inloggen</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- HOOFD APPLICATIE -->
-  <div id="app-content" class="hidden">
+  <!-- HOOFD APPLICATIE (DIRECT ZICHTBAAR ZONDER PINCODE) -->
+  <div id="app-content">
     
     <!-- Header -->
     <header class="bg-emerald-700 text-white shadow-md">
@@ -41,9 +24,7 @@
         <h1 class="text-xl md:text-2xl font-bold flex items-center gap-2">
           <i class="fa-solid fa-futbol"></i> TeamManager Pro
         </h1>
-        <button id="btn-logout" class="text-xs bg-emerald-800 hover:bg-emerald-900 px-3 py-1.5 rounded-lg text-emerald-100 transition cursor-pointer">
-          <i class="fa-solid fa-right-from-bracket"></i> Uitloggen
-        </button>
+        <span class="text-xs bg-emerald-800 px-3 py-1.5 rounded-lg text-emerald-100 font-medium">Open Team Pagina</span>
       </div>
     </header>
 
@@ -214,37 +195,6 @@
   </div>
 
   <script>
-    const CORRECT_PIN = "1962";
-    const pinOverlay = document.getElementById('pin-overlay');
-    const appContent = document.getElementById('app-content');
-    const pinForm = document.getElementById('pin-form');
-    const pinInput = document.getElementById('pin-input');
-    const pinError = document.getElementById('pin-error');
-    const btnLogout = document.getElementById('btn-logout');
-
-    // Controleer inlogstatus bij laden
-    if (localStorage.getItem('team_auth') === '1962') {
-      pinOverlay.classList.add('hidden');
-      appContent.classList.remove('hidden');
-    }
-
-    pinForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      if (pinInput.value === CORRECT_PIN) {
-        localStorage.setItem('team_auth', '1962');
-        pinOverlay.classList.add('hidden');
-        appContent.classList.remove('hidden');
-      } else {
-        pinError.classList.remove('hidden');
-        pinInput.value = '';
-      }
-    });
-
-    btnLogout.addEventListener('click', () => {
-      localStorage.removeItem('team_auth');
-      location.reload();
-    });
-
     const defaultPlayers = [
       { id: 1, name: 'Bram', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
       { id: 2, name: 'Bryan', pos: 'AANVALLER', status: 'aanwezig', assignedPos: null },
@@ -270,13 +220,13 @@
       { id: 22, name: 'Twan', pos: 'MIDDENVELDER', status: 'aanwezig', assignedPos: null }
     ];
 
-    let players = JSON.parse(localStorage.getItem('team_players_v8')) || defaultPlayers;
-    let tasks = JSON.parse(localStorage.getItem('team_tasks_v8')) || { wash: [], corvee: [], drivers: [], gang: [], fluit_jongens: [], fluit_meiden: [] };
+    let players = JSON.parse(localStorage.getItem('team_players_v9')) || defaultPlayers;
+    let tasks = JSON.parse(localStorage.getItem('team_tasks_v9')) || { wash: [], corvee: [], drivers: [], gang: [], fluit_jongens: [], fluit_meiden: [] };
     let currentSelectedSlot = null;
 
     function saveData() {
-      localStorage.setItem('team_players_v8', JSON.stringify(players));
-      localStorage.setItem('team_tasks_v8', JSON.stringify(tasks));
+      localStorage.setItem('team_players_v9', JSON.stringify(players));
+      localStorage.setItem('team_tasks_v9', JSON.stringify(tasks));
       renderList();
       renderPitchAndBench();
       renderTasks();
@@ -531,3 +481,27 @@
         `⏰ *Aanvang:* ${matchTime} uur\n` +
         `📍 *Verzamelen:* ${meetTime} uur\n\n` +
         `📋 *TAKEN DEZE WEEK:*\n` +
+        `🧺 *Wassen:* ${wash}\n` +
+        `🧹 *Corvee:* ${corvee}\n` +
+        `🚗 *Rijders:* ${drivers}\n` +
+        `🧹 *Gangen Vegen:* ${gang}\n` +
+        `🚩 *Fluiten Jongens:* ${fluitJongensTekst}\n` +
+        `🚩 *Fluiten Meiden:* ${fluitMeidenTekst}\n\n` +
+        `✅ *Aanwezig:* ${aanwezig || 'Niemand'}\n` +
+        `❌ *Afwezig/Geblesseerd:* ${afwezig || 'Niemand'}\n\n` +
+        `Tot de wedstrijd! ⚽🔥`;
+
+      navigator.clipboard.writeText(text).then(() => {
+        alert('WhatsApp bericht is gekopieerd!');
+      }).catch(() => {
+        alert('Kopiëren mislukt. Controleer je browserrechten.');
+      });
+    });
+
+    // Init
+    renderList();
+    renderPitchAndBench();
+    renderTasks();
+  </script>
+</body>
+</html>
