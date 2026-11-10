@@ -120,16 +120,12 @@
 
         <!-- Virtueel Voetbalveld met Positie-Slots -->
         <div id="pitch" class="pitch-bg w-full h-[460px] rounded-lg p-3 flex flex-col justify-between relative overflow-hidden shadow-inner mb-4">
-          
           <!-- Aanval -->
           <div id="line-attack" class="flex justify-around items-center z-10 w-full"></div>
-
           <!-- Middenveld -->
           <div id="line-midfield" class="flex justify-around items-center z-10 w-full"></div>
-
           <!-- Verdediging -->
           <div id="line-defense" class="flex justify-around items-center z-10 w-full"></div>
-
           <!-- Keeper -->
           <div id="line-keeper" class="flex justify-center items-center z-10 w-full"></div>
         </div>
@@ -208,12 +204,12 @@
     </div>
   </div>
 
-  <!-- MODAL / POP-UP VOOR SPELER SELECTEREN IN HET VELD -->
+  <!-- MODAL VOOR SPELER SELECTEREN IN HET VELD -->
   <div id="player-modal" class="fixed inset-0 bg-slate-900/80 flex items-center justify-center z-50 p-4 hidden">
     <div class="bg-white rounded-2xl p-5 max-w-xs w-full space-y-3 shadow-xl">
       <h3 class="font-bold text-slate-800 text-sm text-center" id="modal-title">Kies speler voor positie</h3>
       <div id="modal-player-list" class="space-y-1.5 max-h-60 overflow-y-auto"></div>
-      <button onclick="closeModal()" class="w-full bg-slate-200 text-slate-700 font-medium text-xs py-2 rounded-lg">Annuleren</button>
+      <button onclick="closeModal()" class="w-full bg-slate-200 text-slate-700 font-medium text-xs py-2 rounded-lg cursor-pointer">Annuleren</button>
     </div>
   </div>
 
@@ -226,7 +222,8 @@
     const pinError = document.getElementById('pin-error');
     const btnLogout = document.getElementById('btn-logout');
 
-    if (localStorage.getItem('team_auth') === 'true') {
+    // Controleer inlogstatus bij laden
+    if (localStorage.getItem('team_auth') === '1962') {
       pinOverlay.classList.add('hidden');
       appContent.classList.remove('hidden');
     }
@@ -234,7 +231,7 @@
     pinForm.addEventListener('submit', (e) => {
       e.preventDefault();
       if (pinInput.value === CORRECT_PIN) {
-        localStorage.setItem('team_auth', 'true');
+        localStorage.setItem('team_auth', '1962');
         pinOverlay.classList.add('hidden');
         appContent.classList.remove('hidden');
       } else {
@@ -273,9 +270,264 @@
       { id: 22, name: 'Twan', pos: 'MIDDENVELDER', status: 'aanwezig', assignedPos: null }
     ];
 
-    let players = JSON.parse(localStorage.getItem('team_players_v7')) || defaultPlayers;
-    let tasks = JSON.parse(localStorage.getItem('team_tasks_v7')) || { wash: [], corvee: [], drivers: [], gang: [], fluit_jongens: [], fluit_meiden: [] };
+    let players = JSON.parse(localStorage.getItem('team_players_v8')) || defaultPlayers;
+    let tasks = JSON.parse(localStorage.getItem('team_tasks_v8')) || { wash: [], corvee: [], drivers: [], gang: [], fluit_jongens: [], fluit_meiden: [] };
     let currentSelectedSlot = null;
 
     function saveData() {
-      localStorage.setItem('team_players_v7', JSON
+      localStorage.setItem('team_players_v8', JSON.stringify(players));
+      localStorage.setItem('team_tasks_v8', JSON.stringify(tasks));
+      renderList();
+      renderPitchAndBench();
+      renderTasks();
+    }
+
+    function renderList() {
+      const listEl = document.getElementById('player-list');
+      const countEl = document.getElementById('player-count');
+      if (!listEl) return;
+      listEl.innerHTML = '';
+      
+      const actieveSpelers = players.filter(p => p.status === 'aanwezig').length;
+      countEl.innerText = `${actieveSpelers}/${players.length}`;
+
+      players.forEach(p => {
+        const item = document.createElement('div');
+        const isAfwezig = p.status !== 'aanwezig';
+        
+        item.className = `flex items-center justify-between p-2 rounded-lg border text-sm ${isAfwezig ? 'bg-slate-100 border-slate-200 text-slate-400 line-through' : 'bg-slate-50 border-slate-200 text-slate-800'}`;
+
+        item.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="font-medium text-xs">${p.name}</span>
+            <span class="text-[10px] text-slate-400 no-underline uppercase font-bold">(${p.pos[0]})</span>
+          </div>
+          <select onchange="updateStatus(${p.id}, this.value)" class="text-xs p-1 rounded border bg-white text-slate-700 font-medium no-underline cursor-pointer">
+            <option value="aanwezig" ${p.status === 'aanwezig' ? 'selected' : ''}>Aanwezig</option>
+            <option value="afwezig" ${p.status === 'afwezig' ? 'selected' : ''}>Afwezig</option>
+            <option value="geblesseerd" ${p.status === 'geblesseerd' ? 'selected' : ''}>Geblesseerd</option>
+          </select>
+        `;
+        listEl.appendChild(item);
+      });
+    }
+
+    window.updateStatus = function(id, newStatus) {
+      players = players.map(p => {
+        if (p.id === id) {
+          return { ...p, status: newStatus, assignedPos: newStatus !== 'aanwezig' ? null : p.assignedPos };
+        }
+        return p;
+      });
+      saveData();
+    };
+
+    document.getElementById('btn-reset-players').addEventListener('click', () => {
+      players = players.map(p => ({ ...p, status: 'aanwezig', assignedPos: null }));
+      saveData();
+    });
+
+    document.getElementById('add-player-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nameInput = document.getElementById('player-name');
+      const posInput = document.getElementById('player-pos');
+
+      if(nameInput && nameInput.value) {
+        players.push({
+          id: Date.now(),
+          name: nameInput.value,
+          pos: posInput.value,
+          status: 'aanwezig',
+          assignedPos: null
+        });
+        nameInput.value = '';
+        saveData();
+      }
+    });
+
+    const formations = {
+      '4-3-3': {
+        AANVALLER: ['LB', 'SP', 'RB'],
+        MIDDENVELDER: ['LH', 'CM', 'RH'],
+        VERDEDIGER: ['LA', 'CV1', 'CV2', 'RA'],
+        KEEPER: ['K']
+      },
+      '4-4-2': {
+        AANVALLER: ['SP1', 'SP2'],
+        MIDDENVELDER: ['LM', 'CM1', 'CM2', 'RM'],
+        VERDEDIGER: ['LA', 'CV1', 'CV2', 'RA'],
+        KEEPER: ['K']
+      }
+    };
+
+    function renderPitchAndBench() {
+      const activePlayers = players.filter(p => p.status === 'aanwezig');
+      const currentFormation = document.getElementById('formation-select')?.value || '4-3-3';
+      const slots = formations[currentFormation];
+
+      const lines = {
+        KEEPER: document.getElementById('line-keeper'),
+        VERDEDIGER: document.getElementById('line-defense'),
+        MIDDENVELDER: document.getElementById('line-midfield'),
+        AANVALLER: document.getElementById('line-attack')
+      };
+
+      Object.values(lines).forEach(el => { if(el) el.innerHTML = ''; });
+
+      Object.keys(slots).forEach(posType => {
+        slots[posType].forEach(slotCode => {
+          const assignedPlayer = activePlayers.find(p => p.assignedPos === slotCode);
+          
+          const slotBtn = document.createElement('div');
+          slotBtn.className = 'flex flex-col items-center cursor-pointer transition transform active:scale-95';
+          slotBtn.onclick = () => openModalForSlot(slotCode, assignedPlayer);
+
+          if (assignedPlayer) {
+            slotBtn.innerHTML = `
+              <div class="w-8 h-8 rounded-full bg-amber-400 border-2 border-white shadow-md flex items-center justify-center font-bold text-xs text-slate-900">
+                ${assignedPlayer.name[0]}
+              </div>
+              <span class="text-[10px] font-bold text-white bg-slate-900/80 px-1.5 py-0.5 rounded mt-0.5 max-w-[70px] truncate text-center">${assignedPlayer.name}</span>
+            `;
+          } else {
+            slotBtn.innerHTML = `
+              <div class="w-8 h-8 rounded-full bg-white/20 border-2 border-dashed border-white/60 flex items-center justify-center font-bold text-xs text-white">
+                +
+              </div>
+              <span class="text-[9px] font-bold text-emerald-100 uppercase tracking-wider mt-0.5">${slotCode}</span>
+            `;
+          }
+
+          lines[posType].appendChild(slotBtn);
+        });
+      });
+
+      const benchPool = document.getElementById('bench-pool');
+      benchPool.innerHTML = '';
+      let benchCount = 0;
+
+      activePlayers.forEach(p => {
+        if (!p.assignedPos) {
+          benchCount++;
+          const benchTag = document.createElement('div');
+          benchTag.className = 'bg-white border border-slate-300 text-slate-800 px-2.5 py-1 rounded-md text-xs font-medium shadow-sm flex items-center gap-1.5';
+          benchTag.innerHTML = `<span>${p.name}</span> <span class="text-[10px] text-slate-400 uppercase font-bold">(${p.pos[0]})</span>`;
+          benchPool.appendChild(benchTag);
+        }
+      });
+
+      document.getElementById('bench-count').innerText = benchCount;
+    }
+
+    document.getElementById('formation-select').addEventListener('change', () => {
+      players = players.map(p => ({ ...p, assignedPos: null }));
+      saveData();
+    });
+
+    function openModalForSlot(slotCode, currentAssignedPlayer) {
+      currentSelectedSlot = slotCode;
+      const modal = document.getElementById('player-modal');
+      const title = document.getElementById('modal-title');
+      const list = document.getElementById('modal-player-list');
+      
+      title.innerText = `Selecteer speler voor ${slotCode}`;
+      list.innerHTML = '';
+
+      const activePlayers = players.filter(p => p.status === 'aanwezig');
+
+      if (currentAssignedPlayer) {
+        const clearBtn = document.createElement('button');
+        clearBtn.className = 'w-full text-left p-2 rounded-lg bg-rose-50 text-rose-700 font-medium text-xs border border-rose-200 mb-2 cursor-pointer';
+        clearBtn.innerText = `❌ Positie leegmaken (${currentAssignedPlayer.name} eraf)`;
+        clearBtn.onclick = () => {
+          players = players.map(p => p.id === currentAssignedPlayer.id ? { ...p, assignedPos: null } : p);
+          saveData();
+          closeModal();
+        };
+        list.appendChild(clearBtn);
+      }
+
+      activePlayers.forEach(p => {
+        if (!p.assignedPos || p.assignedPos === slotCode) {
+          const pBtn = document.createElement('button');
+          pBtn.className = `w-full text-left p-2 rounded-lg border text-xs font-medium flex justify-between items-center cursor-pointer ${p.assignedPos === slotCode ? 'bg-amber-100 border-amber-300 text-slate-900' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`;
+          pBtn.innerHTML = `<span>${p.name}</span> <span class="text-[10px] text-slate-400">(${p.pos})</span>`;
+          pBtn.onclick = () => {
+            players = players.map(pl => pl.assignedPos === slotCode ? { ...pl, assignedPos: null } : pl);
+            players = players.map(pl => pl.id === p.id ? { ...pl, assignedPos: slotCode } : pl);
+            saveData();
+            closeModal();
+          };
+          list.appendChild(pBtn);
+        }
+      });
+
+      modal.classList.remove('hidden');
+    }
+
+    window.closeModal = function() {
+      document.getElementById('player-modal').classList.add('hidden');
+    }
+
+    window.addTag = function(event, taskKey) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        const val = event.target.value.trim();
+        if (val) {
+          tasks[taskKey].push(val);
+          event.target.value = '';
+          saveData();
+        }
+      }
+    }
+
+    window.removeTag = function(taskKey, index) {
+      tasks[taskKey].splice(index, 1);
+      saveData();
+    }
+
+    function renderTasks() {
+      ['wash', 'corvee', 'drivers', 'gang', 'fluit_jongens', 'fluit_meiden'].forEach(key => {
+        const container = document.getElementById(`tags-${key}`);
+        if (!container) return;
+        container.innerHTML = '';
+        
+        tasks[key].forEach((item, index) => {
+          const tag = document.createElement('span');
+          tag.className = 'inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded-full font-medium';
+          tag.innerHTML = `${item} <button type="button" onclick="removeTag('${key}', ${index})" class="hover:text-rose-600 ml-0.5 cursor-pointer"><i class="fa-solid fa-xmark text-[10px]"></i></button>`;
+          container.appendChild(tag);
+        });
+      });
+    }
+
+    document.getElementById('btn-copy-whatsapp').addEventListener('click', () => {
+      const opponent = document.getElementById('match-opponent').value || '-';
+      const matchType = document.getElementById('match-type').value || '-';
+      const matchTime = document.getElementById('match-time').value || '-';
+      const meetTime = document.getElementById('meet-time').value || '-';
+
+      const formatTask = (arr) => arr.length > 0 ? arr.join(', ') : 'Nog indelen';
+
+      const wash = formatTask(tasks.wash);
+      const corvee = formatTask(tasks.corvee);
+      const drivers = formatTask(tasks.drivers);
+      const gang = formatTask(tasks.gang);
+
+      const fluitJongensNamen = formatTask(tasks.fluit_jongens);
+      const fluitJongensTijd = document.getElementById('tijd-jongens').value;
+      const fluitJongensTekst = tasks.fluit_jongens.length > 0 ? `${fluitJongensNamen} ${fluitJongensTijd ? '(' + fluitJongensTijd + ')' : ''}` : 'N.v.t.';
+
+      const fluitMeidenNamen = formatTask(tasks.fluit_meiden);
+      const fluitMeidenTijd = document.getElementById('tijd-meiden').value;
+      const fluitMeidenTekst = tasks.fluit_meiden.length > 0 ? `${fluitMeidenNamen} ${fluitMeidenTijd ? '(' + fluitMeidenTijd + ')' : ''}` : 'N.v.t.';
+
+      const aanwezig = players.filter(p => p.status === 'aanwezig').map(p => p.name).join(', ');
+      const afwezig = players.filter(p => p.status !== 'aanwezig').map(p => `${p.name} (${p.status})`).join(', ');
+
+      const text = `⚽ *WEDSTRIJD INFORMATIE* ⚽\n` +
+        `--------------------------------\n` +
+        `🆚 *Tegenstander:* ${opponent} (${matchType})\n` +
+        `⏰ *Aanvang:* ${matchTime} uur\n` +
+        `📍 *Verzamelen:* ${meetTime} uur\n\n` +
+        `📋 *TAKEN DEZE WEEK:*\n` +
