@@ -5,206 +5,308 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TeamManager Pro</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
-  <style>
-    .pitch {
-      background: linear-gradient(to bottom, #15803d, #166534);
-      background-size: 100% 40px;
-      border: 2px solid rgba(255, 255, 255, 0.8);
-      position: relative;
-    }
-    .pitch-line {
-      position: absolute;
-      border: 2px solid rgba(255, 255, 255, 0.5);
-      pointer-events: none;
-    }
-    .center-circle {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-    }
-    .halfway-line {
-      top: 50%;
-      width: 100%;
-      height: 0;
-    }
-    .penalty-area-top {
-      top: 0;
-      left: 20%;
-      width: 60%;
-      height: 18%;
-    }
-    .penalty-area-bottom {
-      bottom: 0;
-      left: 20%;
-      width: 60%;
-      height: 18%;
-    }
-  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-slate-100 font-sans text-slate-800 pb-12">
 
-  <!-- Header -->
-  <header class="bg-emerald-700 text-white shadow-md">
-    <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-      <h1 class="text-xl md:text-2xl font-bold flex items-center gap-2">
-        <i class="fa-solid font-bold fa-futbol"></i> TeamManager Pro
-      </h1>
-      <span class="text-xs bg-emerald-800 px-3 py-1 rounded-full text-emerald-100 font-medium">Amateur Matchday</span>
-    </div>
-  </header>
-
-  <div class="max-w-4xl mx-auto px-4 mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-
-    <!-- Kolom Links: Selectie & Spelersbeheer -->
-    <div class="space-y-6">
+  <!-- PINCODE INLOGSCHERM -->
+  <div id="pin-overlay" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-50 p-4">
+    <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full text-center space-y-4">
+      <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl">
+        <i class="fa-solid fa-lock"></i>
+      </div>
+      <h2 class="text-xl font-bold text-slate-800">Team Toegang</h2>
+      <p class="text-xs text-slate-500">Voer de teampincode in om toegang te krijgen tot de team-pagina.</p>
       
-      <!-- Speler Toevoegen -->
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-        <h2 class="font-bold text-slate-700 mb-3 flex items-center gap-2 text-sm uppercase tracking-wider">
-          <i class="fa-solid fa-user-plus text-emerald-600"></i> Speler Toevoegen
-        </h2>
-        <form id="add-player-form" class="space-y-3">
-          <input type="text" id="player-name" placeholder="Naam speler" required class="w-full text-sm p-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
-          <div class="flex gap-2">
-            <input type="number" id="player-number" placeholder="Nr" min="1" max="99" class="w-1/3 text-sm p-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
-            <select id="player-pos" class="w-2/3 text-sm p-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
-              <option value="KEEPER">Keeper</option>
-              <option value="VERDEDIGER">Verdediger</option>
-              <option value="MIDDENVELDER">Middenvelder</option>
-              <option value="AANVALLER">Aanvaller</option>
-            </select>
-          </div>
-          <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm py-2 rounded-lg transition">Toevoegen</button>
-        </form>
-      </div>
-
-      <!-- Selectie & Aanwezigheid -->
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-        <div class="flex justify-between items-center mb-3">
-          <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm uppercase tracking-wider">
-            <i class="fa-solid fa-users text-emerald-600"></i> Selectie (<span id="player-count">0</span>)
-          </h2>
-          <span class="text-xs text-slate-500">Aanwezig / Status</span>
-        </div>
-        <div id="player-list" class="space-y-2 max-h-80 overflow-y-auto pr-1">
-          <!-- Dynamisch gevuld -->
-        </div>
-      </div>
-
+      <form id="pin-form" class="space-y-3">
+        <input type="password" id="pin-input" placeholder="Pincode" maxlength="4" autofocus required class="w-full text-center text-2xl tracking-widest p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+        <p id="pin-error" class="text-xs text-rose-500 font-medium hidden">Onjuiste pincode, probeer opnieuw.</p>
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-lg transition">Inloggen</button>
+      </form>
     </div>
+  </div>
 
-    <!-- Kolom Midden/Rechts: Wedstrijddetails, Veld & Taken -->
-    <div class="md:col-span-2 space-y-6">
-
-      <!-- Wedstrijd Details Card -->
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-        <h2 class="font-bold text-slate-700 mb-4 flex items-center gap-2 text-sm uppercase tracking-wider">
-          <i class="fa-solid fa-calendar-day text-emerald-600"></i> Wedstrijd van de Week
-        </h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-          <div>
-            <label class="block text-xs font-semibold text-slate-500 mb-1">Tegenstander</label>
-            <input type="text" id="match-opponent" value="FC Bal op het Dak 3" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-500 mb-1">Thuis / Uit</label>
-            <select id="match-type" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
-              <option value="Thuis">Thuis</option>
-              <option value="Uit" selected>Uit</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-500 mb-1">Aanvangstijd</label>
-            <input type="time" id="match-time" value="14:30" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-500 mb-1">Verzameltijd</label>
-            <input type="time" id="meet-time" value="13:15" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
-          </div>
-        </div>
-      </div>
-
-      <!-- Opstelling op het veld -->
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm uppercase tracking-wider">
-            <i class="fa-solid fa-chess-board text-emerald-600"></i> Opstelling
-          </h2>
-          <select id="formation-select" class="text-xs p-1.5 border border-slate-300 rounded-lg font-medium">
-            <option value="4-3-3">Formatie: 4-3-3</option>
-            <option value="4-4-2">Formatie: 4-4-2</option>
-            <option value="3-5-2">Formatie: 3-5-2</option>
-          </select>
-        </div>
-
-        <!-- Voetbalveld Visualisatie -->
-        <div class="pitch w-full h-[420px] rounded-lg p-3 flex flex-col justify-between relative overflow-hidden shadow-inner">
-          <div class="pitch-line center-circle"></div>
-          <div class="pitch-line halfway-line"></div>
-          <div class="pitch-line penalty-area-top"></div>
-          <div class="pitch-line penalty-area-bottom"></div>
-
-          <!-- Linies op het veld -->
-          <div id="line-attack" class="flex justify-around items-center z-10 w-full min-h-[50px]"></div>
-          <div id="line-midfield" class="flex justify-around items-center z-10 w-full min-h-[50px]"></div>
-          <div id="line-defense" class="flex justify-around items-center z-10 w-full min-h-[50px]"></div>
-          <div id="line-keeper" class="flex justify-center items-center z-10 w-full min-h-[50px]"></div>
-        </div>
-      </div>
-
-      <!-- Logistiek & Rijders -->
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <h3 class="font-bold text-slate-700 mb-2 text-xs uppercase tracking-wider flex items-center gap-2">
-            <i class="fa-solid fa-car text-emerald-600"></i> Rijders / Auto's
-          </h3>
-          <input type="text" id="task-drivers" placeholder="bijv. Jan (4), Piet (3)" class="w-full text-sm p-2 border border-slate-300 rounded-lg">
-        </div>
-        <div>
-          <h3 class="font-bold text-slate-700 mb-2 text-xs uppercase tracking-wider flex items-center gap-2">
-            <i class="fa-solid fa-shirt text-emerald-600"></i> Waskeur / Fruit / Vlaggen
-          </h3>
-          <input type="text" id="task-wash" placeholder="bijv. Was: Klaas | Vlaggen: Mark" class="w-full text-sm p-2 border border-slate-300 rounded-lg">
-        </div>
-      </div>
-
-      <!-- WhatsApp Generator Button -->
-      <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-3">
-        <div>
-          <h4 class="font-bold text-emerald-900 text-sm">Klaar om te delen?</h4>
-          <p class="text-xs text-emerald-700">Genereer een strak bericht voor in de WhatsApp-groep.</p>
-        </div>
-        <button id="btn-copy-whatsapp" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition">
-          <i class="fa-brands fa-whatsapp text-lg"></i> Kopieer App-Tekst
+  <!-- HOOFD APPLICATIE -->
+  <div id="app-content" class="hidden">
+    
+    <!-- Header -->
+    <header class="bg-emerald-700 text-white shadow-md">
+      <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+        <h1 class="text-xl md:text-2xl font-bold flex items-center gap-2">
+          <i class="fa-solid fa-futbol"></i> TeamManager Pro
+        </h1>
+        <button id="btn-logout" class="text-xs bg-emerald-800 hover:bg-emerald-900 px-3 py-1.5 rounded-lg text-emerald-100 transition">
+          <i class="fa-solid fa-right-from-bracket"></i> Uitloggen
         </button>
       </div>
+    </header>
+
+    <div class="max-w-4xl mx-auto px-4 mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+
+      <!-- Kolom Links: Selectie & Spelersbeheer -->
+      <div class="space-y-6">
+        
+        <!-- Vaste Selectie -->
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+          <div class="flex justify-between items-center mb-3">
+            <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm uppercase tracking-wider">
+              <i class="fa-solid fa-users text-emerald-600"></i> Selectie (<span id="player-count">0</span>)
+            </h2>
+            <button id="btn-reset-players" class="text-[11px] text-emerald-600 hover:underline font-medium">
+              Reset Aanwezigheid
+            </button>
+          </div>
+
+          <div id="player-list" class="space-y-2 max-h-[460px] overflow-y-auto pr-1">
+            <!-- Dynamisch geladen -->
+          </div>
+
+          <!-- Extra speler incidenteel toevoegen -->
+          <form id="add-player-form" class="mt-4 pt-3 border-t border-slate-100 flex gap-2">
+            <input type="text" id="player-name" placeholder="+ Extra speler" required class="w-full text-xs p-2 border border-slate-300 rounded-lg">
+            <select id="player-pos" class="text-xs p-2 border border-slate-300 rounded-lg">
+              <option value="KEEPER">K</option>
+              <option value="VERDEDIGER" selected>V</option>
+              <option value="MIDDENVELDER">M</option>
+              <option value="AANVALLER">A</option>
+            </select>
+            <button type="submit" class="bg-emerald-600 text-white text-xs px-3 rounded-lg font-medium hover:bg-emerald-700">+</button>
+          </form>
+        </div>
+
+      </div>
+
+      <!-- Kolom Midden/Rechts: Wedstrijd, Opstelling & Taken -->
+      <div class="md:col-span-2 space-y-6">
+
+        <!-- Wedstrijd Details Card -->
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+          <h2 class="font-bold text-slate-700 mb-4 flex items-center gap-2 text-sm uppercase tracking-wider">
+            <i class="fa-solid fa-calendar-day text-emerald-600"></i> Wedstrijd van de Week
+          </h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1">Tegenstander</label>
+              <input type="text" id="match-opponent" value="Tegenstander FC" class="w-full p-2 border border-slate-300 rounded-lg">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1">Thuis / Uit</label>
+              <select id="match-type" class="w-full p-2 border border-slate-300 rounded-lg">
+                <option value="Thuis">Thuis</option>
+                <option value="Uit" selected>Uit</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1">Aanvangstijd</label>
+              <input type="time" id="match-time" value="14:30" class="w-full p-2 border border-slate-300 rounded-lg">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1">Verzameltijd</label>
+              <input type="time" id="meet-time" value="13:15" class="w-full p-2 border border-slate-300 rounded-lg">
+            </div>
+          </div>
+        </div>
+
+        <!-- Opstelling op het veld -->
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm uppercase tracking-wider">
+              <i class="fa-solid fa-chess-board text-emerald-600"></i> Opstelling
+            </h2>
+            <select id="formation-select" class="text-xs p-1.5 border border-slate-300 rounded-lg font-medium">
+              <option value="4-3-3" selected>Formatie: 4-3-3</option>
+              <option value="4-4-2">Formatie: 4-4-2</option>
+            </select>
+          </div>
+
+          <!-- Voetbalveld Visualisatie -->
+          <div class="w-full h-[380px] rounded-lg p-3 flex flex-col justify-between relative overflow-hidden shadow-inner" style="background: linear-gradient(to bottom, #15803d, #166534); border: 2px solid rgba(255, 255, 255, 0.8);">
+            <!-- Linies op het veld -->
+            <div id="line-attack" class="flex justify-around items-center z-10 w-full min-h-[50px]"></div>
+            <div id="line-midfield" class="flex justify-around items-center z-10 w-full min-h-[50px]"></div>
+            <div id="line-defense" class="flex justify-around items-center z-10 w-full min-h-[50px]"></div>
+            <div id="line-keeper" class="flex justify-center items-center z-10 w-full min-h-[50px]"></div>
+          </div>
+        </div>
+
+        <!-- Teamtaken -->
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4">
+          <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm uppercase tracking-wider">
+            <i class="fa-solid fa-list-check text-emerald-600"></i> Taken van de Week
+          </h2>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1"><i class="fa-solid fa-shirt text-emerald-600 mr-1"></i> Wassen</label>
+              <input type="text" id="task-wash" placeholder="Naam speler" class="w-full p-2 border border-slate-300 rounded-lg">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1"><i class="fa-solid fa-broom text-emerald-600 mr-1"></i> Corvee</label>
+              <input type="text" id="task-corvee" placeholder="Naam speler(s)" class="w-full p-2 border border-slate-300 rounded-lg">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1"><i class="fa-solid fa-car text-emerald-600 mr-1"></i> Rijden</label>
+              <input type="text" id="task-drivers" placeholder="Namen rijders" class="w-full p-2 border border-slate-300 rounded-lg">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1"><i class="fa-solid fa-person-digging text-emerald-600 mr-1"></i> Gangen Vegen</label>
+              <input type="text" id="task-gang" placeholder="Naam speler" class="w-full p-2 border border-slate-300 rounded-lg">
+            </div>
+          </div>
+
+          <!-- Fluiten taken met variabele tijd -->
+          <div class="pt-2 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1"><i class="fa-solid fa-whistle text-emerald-600 mr-1"></i> Fluiten Jongens</label>
+              <div class="flex gap-2">
+                <input type="text" id="fluit-jongens-naam" placeholder="Wie fluit?" class="w-2/3 p-2 border border-slate-300 rounded-lg">
+                <input type="time" id="fluit-jongens-tijd" class="w-1/3 p-2 border border-slate-300 rounded-lg text-xs">
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1"><i class="fa-solid fa-whistle text-emerald-600 mr-1"></i> Fluiten Meiden</label>
+              <div class="flex gap-2">
+                <input type="text" id="fluit-meiden-naam" placeholder="Wie fluit?" class="w-2/3 p-2 border border-slate-300 rounded-lg">
+                <input type="time" id="fluit-meiden-tijd" class="w-1/3 p-2 border border-slate-300 rounded-lg text-xs">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WhatsApp Generator Button -->
+        <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-3">
+          <div>
+            <h4 class="font-bold text-emerald-900 text-sm">Klaar om te delen?</h4>
+            <p class="text-xs text-emerald-700">Genereer een strak bericht voor in de WhatsApp-groep.</p>
+          </div>
+          <button id="btn-copy-whatsapp" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition cursor-pointer">
+            <i class="fa-brands fa-whatsapp text-lg"></i> Kopieer WhatsApp Bericht
+          </button>
+        </div>
+
+      </div>
 
     </div>
-
   </div>
 
   <script>
-    // Standaard Spelers
-    let defaultPlayers = [
-      { id: 1, name: 'Daan', number: 1, pos: 'KEEPER', status: 'aanwezig' },
-      { id: 2, name: 'Lars', number: 2, pos: 'VERDEDIGER', status: 'aanwezig' },
-      { id: 3, name: 'Sven', number: 4, pos: 'VERDEDIGER', status: 'aanwezig' },
-      { id: 4, name: 'Milan', number: 5, pos: 'VERDEDIGER', status: 'afwezig' },
-      { id: 5, name: 'Bram', number: 3, pos: 'VERDEDIGER', status: 'aanwezig' },
-      { id: 6, name: 'Luuk', number: 6, pos: 'MIDDENVELDER', status: 'aanwezig' },
-      { id: 7, name: 'Finn', number: 8, pos: 'MIDDENVELDER', status: 'aanwezig' },
-      { id: 8, name: 'Jesse', number: 10, pos: 'MIDDENVELDER', status: 'aanwezig' },
-      { id: 9, name: 'Sem', number: 7, pos: 'AANVALLER', status: 'aanwezig' },
-      { id: 10, name: 'Thomas', number: 9, pos: 'AANVALLER', status: 'aanwezig' },
-      { id: 11, name: 'Stijn', number: 11, pos: 'AANVALLER', status: 'geblesseerd' },
-      { id: 12, name: 'Ruben', number: 12, pos: 'VERDEDIGER', status: 'aanwezig' }
+    // --- PINCODE BEVEILIGING (1962) ---
+    const CORRECT_PIN = "1962";
+    const pinOverlay = document.getElementById('pin-overlay');
+    const appContent = document.getElementById('app-content');
+    const pinForm = document.getElementById('pin-form');
+    const pinInput = document.getElementById('pin-input');
+    const pinError = document.getElementById('pin-error');
+    const btnLogout = document.getElementById('btn-logout');
+
+    if (localStorage.getItem('team_auth') === 'true') {
+      pinOverlay.classList.add('hidden');
+      appContent.classList.remove('hidden');
+    }
+
+    pinForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (pinInput.value === CORRECT_PIN) {
+        localStorage.setItem('team_auth', 'true');
+        pinOverlay.classList.add('hidden');
+        appContent.classList.remove('hidden');
+      } else {
+        pinError.classList.remove('hidden');
+        pinInput.value = '';
+      }
+    });
+
+    btnLogout.addEventListener('click', () => {
+      localStorage.removeItem('team_auth');
+      location.reload();
+    });
+
+    // --- VASTE SPELERSSELECTIE ---
+    const defaultPlayers = [
+      { id: 1, name: 'Daan', pos: 'KEEPER', status: 'aanwezig' },
+      { id: 2, name: 'Lars', pos: 'VERDEDIGER', status: 'aanwezig' },
+      { id: 3, name: 'Sven', pos: 'VERDEDIGER', status: 'aanwezig' },
+      { id: 4, name: 'Milan', pos: 'VERDEDIGER', status: 'aanwezig' },
+      { id: 5, name: 'Bram', pos: 'VERDEDIGER', status: 'aanwezig' },
+      { id: 6, name: 'Luuk', pos: 'MIDDENVELDER', status: 'aanwezig' },
+      { id: 7, name: 'Finn', pos: 'MIDDENVELDER', status: 'aanwezig' },
+      { id: 8, name: 'Jesse', pos: 'MIDDENVELDER', status: 'aanwezig' },
+      { id: 9, name: 'Sem', pos: 'AANVALLER', status: 'aanwezig' },
+      { id: 10, name: 'Thomas', pos: 'AANVALLER', status: 'aanwezig' },
+      { id: 11, name: 'Stijn', pos: 'AANVALLER', status: 'aanwezig' },
+      { id: 12, name: 'Ruben', pos: 'VERDEDIGER', status: 'aanwezig' },
+      { id: 13, name: 'Niek', pos: 'MIDDENVELDER', status: 'aanwezig' },
+      { id: 14, name: 'Thijs', pos: 'AANVALLER', status: 'aanwezig' }
     ];
 
-    let players = JSON.parse(localStorage.getItem('team_players')) || defaultPlayers;
+    let players = JSON.parse(localStorage.getItem('team_players_v2')) || defaultPlayers;
 
     function savePlayers() {
-      localStorage.setItem('team_players', JSON.stringify(players));
+      localStorage.setItem('team_players_v2', JSON.stringify(players));
+      renderList();
+      renderPitch();
+    }
+
+    function renderList() {
+      const listEl = document.getElementById('player-list');
+      const countEl = document.getElementById('player-count');
+      if (!listEl) return;
+      listEl.innerHTML = '';
+      
+      const actieveSpelers = players.filter(p => p.status === 'aanwezig').length;
+      countEl.innerText = `${actieveSpelers}/${players.length}`;
+
+      players.forEach(p => {
+        const item = document.createElement('div');
+        const isAfwezig = p.status !== 'aanwezig';
+        
+        item.className = `flex items-center justify-between p-2 rounded-lg border text-sm ${isAfwezig ? 'bg-slate-100 border-slate-200 text-slate-400 line-through' : 'bg-slate-50 border-slate-200 text-slate-800'}`;
+
+        item.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="font-medium">${p.name}</span>
+            <span class="text-[10px] text-slate-400 no-underline uppercase font-bold">(${p.pos[0]})</span>
+          </div>
+          <select onchange="updateStatus(${p.id}, this.value)" class="text-xs p-1 rounded border bg-white text-slate-700 font-medium no-underline cursor-pointer">
+            <option value="aanwezig" ${p.status === 'aanwezig' ? 'selected' : ''}>Aanwezig</option>
+            <option value="afwezig" ${p.status === 'afwezig' ? 'selected' : ''}>Afwezig</option>
+            <option value="geblesseerd" ${p.status === 'geblesseerd' ? 'selected' : ''}>Geblesseerd</option>
+          </select>
+        `;
+        listEl.appendChild(item);
+      });
+    }
+
+    window.updateStatus = function(id, newStatus) {
+      players = players.map(p => p.id === id ? { ...p, status: newStatus } : p);
+      savePlayers();
+    };
+
+    document.getElementById('btn-reset-players').addEventListener('click', () => {
+      players = players.map(p => ({ ...p, status: 'aanwezig' }));
+      savePlayers();
+    });
+
+    document.getElementById('add-player-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nameInput = document.getElementById('player-name');
+      const posInput = document.getElementById('player-pos');
+
+      if(nameInput && nameInput.value) {
+        players.push({
+          id: Date.now(),
+          name: nameInput.value,
+          pos: posInput.value,
+          status: 'aanwezig'
+        });
+        nameInput.value = '';
+        savePlayers();
+      }
+    });
+
+    // --- VELD WEERGAVE ---
+    function renderPitch() {
+      const activePlayers = players.filter(p => p.status === 'aanwezig');
+      
+      const lines = {
+        KEEPER: document.getElementById('
