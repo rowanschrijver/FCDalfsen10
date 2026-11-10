@@ -21,7 +21,7 @@
       <form id="pin-form" class="space-y-3">
         <input type="password" id="pin-input" placeholder="Pincode" maxlength="4" autofocus required class="w-full text-center text-2xl tracking-widest p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
         <p id="pin-error" class="text-xs text-rose-500 font-medium hidden">Onjuiste pincode, probeer opnieuw.</p>
-        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-lg transition">Inloggen</button>
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-lg transition cursor-pointer">Inloggen</button>
       </form>
     </div>
   </div>
@@ -35,7 +35,7 @@
         <h1 class="text-xl md:text-2xl font-bold flex items-center gap-2">
           <i class="fa-solid fa-futbol"></i> TeamManager Pro
         </h1>
-        <button id="btn-logout" class="text-xs bg-emerald-800 hover:bg-emerald-900 px-3 py-1.5 rounded-lg text-emerald-100 transition">
+        <button id="btn-logout" class="text-xs bg-emerald-800 hover:bg-emerald-900 px-3 py-1.5 rounded-lg text-emerald-100 transition cursor-pointer">
           <i class="fa-solid fa-right-from-bracket"></i> Uitloggen
         </button>
       </div>
@@ -43,16 +43,14 @@
 
     <div class="max-w-4xl mx-auto px-4 mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
 
-      <!-- Kolom Links: Selectie & Spelersbeheer -->
+      <!-- Kolom Links: Vaste Selectie -->
       <div class="space-y-6">
-        
-        <!-- Vaste Selectie -->
         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
           <div class="flex justify-between items-center mb-3">
             <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm uppercase tracking-wider">
               <i class="fa-solid fa-users text-emerald-600"></i> Selectie (<span id="player-count">0</span>)
             </h2>
-            <button id="btn-reset-players" class="text-[11px] text-emerald-600 hover:underline font-medium">
+            <button id="btn-reset-players" class="text-[11px] text-emerald-600 hover:underline font-medium cursor-pointer">
               Reset Aanwezigheid
             </button>
           </div>
@@ -70,10 +68,9 @@
               <option value="MIDDENVELDER">M</option>
               <option value="AANVALLER">A</option>
             </select>
-            <button type="submit" class="bg-emerald-600 text-white text-xs px-3 rounded-lg font-medium hover:bg-emerald-700">+</button>
+            <button type="submit" class="bg-emerald-600 text-white text-xs px-3 rounded-lg font-medium hover:bg-emerald-700 cursor-pointer">+</button>
           </form>
         </div>
-
       </div>
 
       <!-- Kolom Midden/Rechts: Wedstrijd, Opstelling & Taken -->
@@ -113,7 +110,7 @@
             <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm uppercase tracking-wider">
               <i class="fa-solid fa-chess-board text-emerald-600"></i> Opstelling
             </h2>
-            <select id="formation-select" class="text-xs p-1.5 border border-slate-300 rounded-lg font-medium">
+            <select id="formation-select" class="text-xs p-1.5 border border-slate-300 rounded-lg font-medium cursor-pointer">
               <option value="4-3-3" selected>Formatie: 4-3-3</option>
               <option value="4-4-2">Formatie: 4-4-2</option>
             </select>
@@ -239,10 +236,10 @@
       { id: 14, name: 'Thijs', pos: 'AANVALLER', status: 'aanwezig' }
     ];
 
-    let players = JSON.parse(localStorage.getItem('team_players_v2')) || defaultPlayers;
+    let players = JSON.parse(localStorage.getItem('team_players_v3')) || defaultPlayers;
 
     function savePlayers() {
-      localStorage.setItem('team_players_v2', JSON.stringify(players));
+      localStorage.setItem('team_players_v3', JSON.stringify(players));
       renderList();
       renderPitch();
     }
@@ -304,9 +301,87 @@
       }
     });
 
-    // --- VELD WEERGAVE ---
+    // --- VELD WEERGAVE (4-3-3 / 4-4-2 logica) ---
     function renderPitch() {
       const activePlayers = players.filter(p => p.status === 'aanwezig');
+      const formation = document.getElementById('formation-select')?.value || '4-3-3';
       
       const lines = {
-        KEEPER: document.getElementById('
+        KEEPER: document.getElementById('line-keeper'),
+        VERDEDIGER: document.getElementById('line-defense'),
+        MIDDENVELDER: document.getElementById('line-midfield'),
+        AANVALLER: document.getElementById('line-attack')
+      };
+
+      Object.values(lines).forEach(el => { if(el) el.innerHTML = ''; });
+
+      // Eventueel posities aanpassen o.b.v. formatie (voor 4-4-2 kunnen we evt aanvallers/middenvelders flexibel indelen, behouden we de basisopstelling)
+      activePlayers.forEach(p => {
+        const pEl = document.createElement('div');
+        pEl.className = 'flex flex-col items-center';
+        pEl.innerHTML = `
+          <div class="w-7 h-7 rounded-full bg-amber-400 border-2 border-white shadow flex items-center justify-center font-bold text-xs text-slate-900">
+            ${p.name[0]}
+          </div>
+          <span class="text-[10px] font-bold text-white bg-slate-900/70 px-1 rounded mt-0.5 max-w-[65px] truncate text-center">${p.name}</span>
+        `;
+        if (lines[p.pos]) {
+          lines[p.pos].appendChild(pEl);
+        }
+      });
+    }
+
+    document.getElementById('formation-select').addEventListener('change', renderPitch);
+
+    // --- WHATSAPP BERICHT GENERATIE ---
+    document.getElementById('btn-copy-whatsapp').addEventListener('click', () => {
+      const opponent = document.getElementById('match-opponent').value || '-';
+      const matchType = document.getElementById('match-type').value || '-';
+      const matchTime = document.getElementById('match-time').value || '-';
+      const meetTime = document.getElementById('meet-time').value || '-';
+
+      const wash = document.getElementById('task-wash').value || 'Nog indelen';
+      const corvee = document.getElementById('task-corvee').value || 'Nog indelen';
+      const drivers = document.getElementById('task-drivers').value || 'Nog indelen';
+      const gang = document.getElementById('task-gang').value || 'Nog indelen';
+
+      const fluitJongensNaam = document.getElementById('fluit-jongens-naam').value;
+      const fluitJongensTijd = document.getElementById('fluit-jongens-tijd').value;
+      const fluitMeidenNaam = document.getElementById('fluit-meiden-naam').value;
+      const fluitMeidenTijd = document.getElementById('fluit-meiden-tijd').value;
+
+      const fluitJongensTekst = fluitJongensNaam ? `${fluitJongensNaam} ${fluitJongensTijd ? '(' + fluitJongensTijd + ')' : ''}` : 'N.v.t.';
+      const fluitMeidenTekst = fluitMeidenNaam ? `${fluitMeidenNaam} ${fluitMeidenTijd ? '(' + fluitMeidenTijd + ')' : ''}` : 'N.v.t.';
+
+      const aanwezig = players.filter(p => p.status === 'aanwezig').map(p => p.name).join(', ');
+      const afwezig = players.filter(p => p.status !== 'aanwezig').map(p => `${p.name} (${p.status})`).join(', ');
+
+      const text = `⚽ *WEDSTRIJD INFORMATIE* ⚽\n` +
+        `--------------------------------\n` +
+        `🆚 *Tegenstander:* ${opponent} (${matchType})\n` +
+        `⏰ *Aanvang:* ${matchTime} uur\n` +
+        `📍 *Verzamelen:* ${meetTime} uur\n\n` +
+        `📋 *TAKEN DEZE WEEK:*\n` +
+        `🧺 *Wassen:* ${wash}\n` +
+        `🧹 *Corvee:* ${corvee}\n` +
+        `🚗 *Rijders:* ${drivers}\n` +
+        `🧹 *Gangen Vegen:* ${gang}\n` +
+        `🚩 *Fluiten Jongens:* ${fluitJongensTekst}\n` +
+        `🚩 *Fluiten Meiden:* ${fluitMeidenTekst}\n\n` +
+        `✅ *Aanwezig:* ${aanwezig || 'Niemand'}\n` +
+        `❌ *Afwezig/Geblesseerd:* ${afwezig || 'Niemand'}\n\n` +
+        `Tot de wedstrijd! ⚽🔥`;
+
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Het volledige WhatsApp bericht is gekopieerd naar je klembord!');
+      }).catch(() => {
+        alert('Kopiëren mislukt. Controleer of je browser toegang heeft tot het klembord.');
+      });
+    });
+
+    // Init
+    renderList();
+    renderPitch();
+  </script>
+</body>
+</html>
