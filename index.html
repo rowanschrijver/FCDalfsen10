@@ -6,7 +6,7 @@
   <title>TeamManager Pro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Supabase Client Library voor live sync -->
+  <!-- Supabase Client Library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     .pitch-bg {
@@ -44,7 +44,7 @@
           <i class="fa-solid fa-futbol"></i> TeamManager Pro
         </h1>
         <div class="flex items-center gap-3">
-          <span id="sync-status" class="text-[10px] bg-emerald-800 px-2.5 py-1 rounded-full text-emerald-200">Verbinden...</span>
+          <span id="sync-status" class="text-[10px] bg-amber-800 px-2.5 py-1 rounded-full text-amber-200">Verbinden...</span>
           <button id="btn-logout" class="text-xs bg-emerald-800 hover:bg-emerald-900 px-3 py-1.5 rounded-lg text-emerald-100 transition cursor-pointer">
             <i class="fa-solid fa-right-from-bracket"></i> Uitloggen
           </button>
@@ -62,7 +62,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
           <div>
             <label class="block text-xs font-semibold text-slate-500 mb-1">Tegenstander</label>
-            <input type="text" id="match-opponent" value="Tegenstander FC" oninput="triggerAutoSave()" class="w-full p-2 border border-slate-300 rounded-lg">
+            <input type="text" id="match-opponent" oninput="triggerAutoSave()" class="w-full p-2 border border-slate-300 rounded-lg">
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-500 mb-1">Thuis / Uit</label>
@@ -77,11 +77,11 @@
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-500 mb-1">Aanvangstijd</label>
-            <input type="time" id="match-time" value="14:30" onchange="triggerAutoSave()" class="w-full p-2 border border-slate-300 rounded-lg">
+            <input type="time" id="match-time" onchange="triggerAutoSave()" class="w-full p-2 border border-slate-300 rounded-lg">
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-500 mb-1">Verzameltijd</label>
-            <input type="time" id="meet-time" value="13:15" onchange="triggerAutoSave()" class="w-full p-2 border border-slate-300 rounded-lg">
+            <input type="time" id="meet-time" onchange="triggerAutoSave()" class="w-full p-2 border border-slate-300 rounded-lg">
           </div>
         </div>
       </div>
@@ -97,9 +97,7 @@
           </button>
         </div>
 
-        <div id="player-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-[350px] overflow-y-auto pr-1">
-          <!-- Dynamisch geladen -->
-        </div>
+        <div id="player-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-[350px] overflow-y-auto pr-1"></div>
 
         <form id="add-player-form" class="mt-4 pt-3 border-t border-slate-100 flex gap-2">
           <input type="text" id="player-name" placeholder="+ Gastspeler" required class="w-full text-xs p-2 border border-slate-300 rounded-lg">
@@ -124,9 +122,8 @@
             <option value="4-4-2">Formatie: 4-4-2</option>
           </select>
         </div>
-        <p class="text-[11px] text-slate-500 mb-4 italic">💡 Tik op een positie op het veld om een speler te kiezen. Wijzigingen worden direct live gedeeld.</p>
+        <p class="text-[11px] text-slate-500 mb-4 italic">💡 Tik op een positie op het veld om een speler te kiezen.</p>
 
-        <!-- Virtueel Voetbalveld -->
         <div id="pitch" class="pitch-bg w-full h-[460px] rounded-lg p-3 flex flex-col justify-between relative overflow-hidden shadow-inner mb-4">
           <div id="line-attack" class="flex justify-around items-center z-10 w-full"></div>
           <div id="line-midfield" class="flex justify-around items-center z-10 w-full"></div>
@@ -134,7 +131,6 @@
           <div id="line-keeper" class="flex justify-center items-center z-10 w-full"></div>
         </div>
 
-        <!-- Reservebank -->
         <div class="bg-slate-50 border border-slate-200 p-3 rounded-lg">
           <h3 class="text-xs font-bold text-slate-600 uppercase mb-2 flex items-center gap-1.5">
             <i class="fa-solid fa-bench-tree text-amber-600"></i> Reservebank / Niet opgesteld (<span id="bench-count">0</span>)
@@ -216,7 +212,6 @@
   </div>
 
   <script>
-    // --- SUPABASE CONFIGURATIE ---
     const SUPABASE_URL = 'https://lqllgctrhylssiveitny.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_ALCbXH4b0DP6-VRhW862_w_tfZYTkwg';
     
@@ -230,7 +225,6 @@
     const pinError = document.getElementById('pin-error');
     const btnLogout = document.getElementById('btn-logout');
 
-    // Vaste en stabiele inlog-sleutel (raakt niet meer van stuk bij updates)
     const AUTH_KEY = 'teammanager_is_logged_in';
 
     if (localStorage.getItem(AUTH_KEY) === 'true') {
@@ -304,18 +298,21 @@
           .eq('id', 'match_state')
           .single();
 
-        if (data && data.data) {
+        if (data && data.data && data.data.match) {
           appState = data.data;
-          if (!appState.players || appState.players.length !== defaultPlayers.length) {
+          if (!appState.players || appState.players.length === 0) {
             appState.players = defaultPlayers;
           }
+        } else {
+          // Als er nog niets in staat, schrijf de defaults meteen weg
+          await supabaseClient.from('team_data').upsert({ id: 'match_state', data: appState });
         }
-        statusEl.innerText = 'Live gesynchroniseerd';
+        statusEl.innerText = 'Live verbonden';
         statusEl.className = 'text-[10px] bg-emerald-800 px-2.5 py-1 rounded-full text-emerald-200';
         renderAll();
       } catch (err) {
-        statusEl.innerText = 'Offline modus';
-        statusEl.className = 'text-[10px] bg-amber-800 px-2.5 py-1 rounded-full text-amber-200';
+        statusEl.innerText = 'Verbindingsfout';
+        statusEl.className = 'text-[10px] bg-rose-800 px-2.5 py-1 rounded-full text-rose-200';
         renderAll();
       }
     }
@@ -347,19 +344,24 @@
 
       const statusEl = document.getElementById('sync-status');
       statusEl.innerText = 'Opslaan...';
+      statusEl.className = 'text-[10px] bg-amber-800 px-2.5 py-1 rounded-full text-amber-200';
 
       clearTimeout(saveTimeout);
       saveTimeout = setTimeout(async () => {
         try {
-          await supabaseClient
+          const { error } = await supabaseClient
             .from('team_data')
-            .update({ data: appState })
-            .eq('id', 'match_state');
-          statusEl.innerText = 'Live gesynchroniseerd';
+            .upsert({ id: 'match_state', data: appState });
+
+          if (error) throw error;
+
+          statusEl.innerText = 'Live verbonden';
+          statusEl.className = 'text-[10px] bg-emerald-800 px-2.5 py-1 rounded-full text-emerald-200';
         } catch (e) {
           statusEl.innerText = 'Opslaan mislukt';
+          statusEl.className = 'text-[10px] bg-rose-800 px-2.5 py-1 rounded-full text-rose-200';
         }
-      }, 500);
+      }, 300);
     }
 
     function renderAll() {
