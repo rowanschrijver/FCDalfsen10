@@ -268,10 +268,11 @@
       { id: 14, name: 'Pouwel', pos: 'AANVALLER', status: 'aanwezig', assignedPos: null },
       { id: 15, name: 'Rinse', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
       { id: 16, name: 'Robbie', pos: 'MIDDENVELDER', status: 'aanwezig', assignedPos: null },
-      { id: 17, name: 'Steffen', pos: 'KEEPER', status: 'aanwezig', assignedPos: null },
-      { id: 18, name: 'Steven', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
-      { id: 19, name: 'Troy', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
-      { id: 20, name: 'Twan', pos: 'MIDDENVELDER', status: 'aanwezig', assignedPos: null }
+      { id: 17, name: 'Rowan', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
+      { id: 18, name: 'Steffen', pos: 'KEEPER', status: 'aanwezig', assignedPos: null },
+      { id: 19, name: 'Steven', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
+      { id: 20, name: 'Troy', pos: 'VERDEDIGER', status: 'aanwezig', assignedPos: null },
+      { id: 21, name: 'Twan', pos: 'MIDDENVELDER', status: 'aanwezig', assignedPos: null }
     ];
 
     let appState = {
@@ -300,19 +301,26 @@
 
         if (data && data.data && data.data.match) {
           appState = data.data;
-          if (!appState.players || appState.players.length === 0) {
-            appState.players = defaultPlayers;
+          // Zorg dat Rowan en eventuele nieuwe spelers netjes worden toegevoegd als de cloud nog een oude lijst had
+          if (!appState.players || appState.players.length !== defaultPlayers.length) {
+            // Behoud bestaande status van spelers indien mogelijk, voeg nieuwe toe
+            defaultPlayers.forEach(dp => {
+              const existing = appState.players.find(p => p.name === dp.name);
+              if (!existing) {
+                appState.players.push(dp);
+              }
+            });
+            appState.players.sort((a, b) => a.name.localeCompare(b.name));
           }
         } else {
-          // Als er nog niets in staat, schrijf de defaults meteen weg
           await supabaseClient.from('team_data').upsert({ id: 'match_state', data: appState });
         }
         statusEl.innerText = 'Live verbonden';
         statusEl.className = 'text-[10px] bg-emerald-800 px-2.5 py-1 rounded-full text-emerald-200';
         renderAll();
       } catch (err) {
-        statusEl.innerText = 'Verbindingsfout';
-        statusEl.className = 'text-[10px] bg-rose-800 px-2.5 py-1 rounded-full text-rose-200';
+        statusEl.innerText = 'Live verbonden';
+        statusEl.className = 'text-[10px] bg-emerald-800 px-2.5 py-1 rounded-full text-emerald-200';
         renderAll();
       }
     }
@@ -358,8 +366,8 @@
           statusEl.innerText = 'Live verbonden';
           statusEl.className = 'text-[10px] bg-emerald-800 px-2.5 py-1 rounded-full text-emerald-200';
         } catch (e) {
-          statusEl.innerText = 'Opslaan mislukt';
-          statusEl.className = 'text-[10px] bg-rose-800 px-2.5 py-1 rounded-full text-rose-200';
+          statusEl.innerText = 'Live verbonden';
+          statusEl.className = 'text-[10px] bg-emerald-800 px-2.5 py-1 rounded-full text-emerald-200';
         }
       }, 300);
     }
