@@ -364,4 +364,275 @@
       document.getElementById('match-date').value = appState.match.date || '';
       document.getElementById('match-time').value = appState.match.time || '14:30';
       document.getElementById('meet-time').value = appState.match.meet || '13:15';
-      document.getElementById('formation-select').value = appState.formation || '
+      document.getElementById('formation-select').value = appState.formation || '4-3-3';
+      document.getElementById('tijd-jongens').value = appState.tasks.tijd_jongens || '';
+      document.getElementById('tijd-meiden').value = appState.tasks.tijd_meiden || '';
+
+      renderList();
+      renderPitchAndBench();
+      renderTasks();
+    }
+
+    function renderList() {
+      const listEl = document.getElementById('player-list');
+      const countEl = document.getElementById('player-count');
+      if (!listEl) return;
+      listEl.innerHTML = '';
+      
+      const actieveSpelers = appState.players.filter(p => p.status === 'aanwezig').length;
+      countEl.innerText = `${actieveSpelers}/${appState.players.length}`;
+
+      appState.players.forEach(p => {
+        const item = document.createElement('div');
+        const isAfwezig = p.status !== 'aanwezig';
+        
+        item.className = `flex items-center justify-between p-2 rounded-lg border text-sm ${isAfwezig ? 'bg-slate-100 border-slate-200 text-slate-400 line-through' : 'bg-slate-50 border-slate-200 text-slate-800'}`;
+
+        item.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="font-medium text-xs">${p.name}</span>
+            <span class="text-[10px] text-slate-400 no-underline uppercase font-bold">(${p.pos[0]})</span>
+          </div>
+          <select onchange="updateStatus(${p.id}, this.value)" class="text-xs p-1 rounded border bg-white text-slate-700 font-medium no-underline cursor-pointer">
+            <option value="aanwezig" ${p.status === 'aanwezig' ? 'selected' : ''}>Aanwezig</option>
+            <option value="afwezig" ${p.status === 'afwezig' ? 'selected' : ''}>Afwezig</option>
+            <option value="geblesseerd" ${p.status === 'geblesseerd' ? 'selected' : ''}>Geblesseerd</option>
+          </select>
+        `;
+        listEl.appendChild(item);
+      });
+    }
+
+    window.updateStatus = function(id, newStatus) {
+      appState.players = appState.players.map(p => {
+        if (p.id === id) {
+          return { ...p, status: newStatus, assignedPos: newStatus !== 'aanwezig' ? null : p.assignedPos };
+        }
+        return p;
+      });
+      triggerAutoSave();
+    };
+
+    document.getElementById('btn-reset-players').addEventListener('click', () => {
+      appState.players = appState.players.map(p => ({ ...p, status: 'aanwezig', assignedPos: null }));
+      triggerAutoSave();
+    });
+
+    document.getElementById('add-player-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nameInput = document.getElementById('player-name');
+      const posInput = document.getElementById('player-pos');
+
+      if(nameInput && nameInput.value) {
+        appState.players.push({
+          id: Date.now(),
+          name: nameInput.value,
+          pos: posInput.value,
+          status: 'aanwezig',
+          assignedPos: null
+        });
+        nameInput.value = '';
+        triggerAutoSave();
+      }
+    });
+
+    const formations = {
+      '4-3-3': {
+        AANVALLER: ['LB', 'SP', 'RB'],
+        MIDDENVELDER: ['LH', 'CM', 'RH'],
+        VERDEDIGER: ['LA', 'CV1', 'CV2', 'RA'],
+        KEEPER: ['K']
+      },
+      '4-4-2': {
+        AANVALLER: ['SP1', 'SP2'],
+        MIDDENVELDER: ['LM', 'CM1', 'CM2', 'RM'],
+        VERDEDIGER: ['LA', 'CV1', 'CV2', 'RA'],
+        KEEPER: ['K']
+      }
+    };
+
+    function renderPitchAndBench() {
+      const activePlayers = appState.players.filter(p => p.status === 'aanwezig');
+      const currentFormation = document.getElementById('formation-select')?.value || '4-3-3';
+      const slots = formations[currentFormation];
+
+      const lines = {
+        KEEPER: document.getElementById('line-keeper'),
+        VERDEDIGER: document.getElementById('line-defense'),
+        MIDDENVELDER: document.getElementById('line-midfield'),
+        AANVALLER: document.getElementById('line-attack')
+      };
+
+      Object.values(lines).forEach(el => { if(el) el.innerHTML = ''; });
+
+      Object.keys(slots).forEach(posType => {
+        slots[posType].forEach(slotCode => {
+          const assignedPlayer = activePlayers.find(p => p.assignedPos === slotCode);
+          
+          const slotBtn = document.createElement('div');
+          slotBtn.className = 'flex flex-col items-center cursor-pointer transition transform active:scale-95';
+          slotBtn.onclick = () => openModalForSlot(slotCode, assignedPlayer);
+
+          if (assignedPlayer) {
+            slotBtn.innerHTML = `
+              <div class="w-8 h-8 rounded-full bg-amber-400 border-2 border-white shadow-md flex items-center justify-center font-bold text-xs text-slate-900">
+                ${assignedPlayer.name[0]}
+              </div>
+              <span class="text-[10px] font-bold text-white bg-slate-900/80 px-1.5 py-0.5 rounded mt-0.5 max-w-[70px] truncate text-center">${assignedPlayer.name}</span>
+            `;
+          } else {
+            slotBtn.innerHTML = `
+              <div class="w-8 h-8 rounded-full bg-white/20 border-2 border-dashed border-white/60 flex items-center justify-center font-bold text-xs text-white">
+                +
+              </div>
+              <span class="text-[9px] font-bold text-emerald-100 uppercase tracking-wider mt-0.5">${slotCode}</span>
+            `;
+          }
+
+          lines[posType].appendChild(slotBtn);
+        });
+      });
+
+      const benchPool = document.getElementById('bench-pool');
+      benchPool.innerHTML = '';
+      let benchCount = 0;
+
+      activePlayers.forEach(p => {
+        if (!p.assignedPos) {
+          benchCount++;
+          const benchTag = document.createElement('div');
+          benchTag.className = 'bg-white border border-slate-300 text-slate-800 px-2.5 py-1 rounded-md text-xs font-medium shadow-sm flex items-center gap-1.5';
+          benchTag.innerHTML = `<span>${p.name}</span> <span class="text-[10px] text-slate-400 uppercase font-bold">(${p.pos[0]})</span>`;
+          benchPool.appendChild(benchTag);
+        }
+      });
+
+      document.getElementById('bench-count').innerText = benchCount;
+    }
+
+    function openModalForSlot(slotCode, currentAssignedPlayer) {
+      const modal = document.getElementById('player-modal');
+      const title = document.getElementById('modal-title');
+      const list = document.getElementById('modal-player-list');
+      
+      title.innerText = `Selecteer speler voor ${slotCode}`;
+      list.innerHTML = '';
+
+      const activePlayers = appState.players.filter(p => p.status === 'aanwezig');
+
+      if (currentAssignedPlayer) {
+        const clearBtn = document.createElement('button');
+        clearBtn.className = 'w-full text-left p-2 rounded-lg bg-rose-50 text-rose-700 font-medium text-xs border border-rose-200 mb-2 cursor-pointer';
+        clearBtn.innerText = `❌ Positie leegmaken (${currentAssignedPlayer.name} eraf)`;
+        clearBtn.onclick = () => {
+          appState.players = appState.players.map(p => p.id === currentAssignedPlayer.id ? { ...p, assignedPos: null } : p);
+          triggerAutoSave();
+          closeModal();
+        };
+        list.appendChild(clearBtn);
+      }
+
+      activePlayers.forEach(p => {
+        if (!p.assignedPos || p.assignedPos === slotCode) {
+          const pBtn = document.createElement('button');
+          pBtn.className = `w-full text-left p-2 rounded-lg border text-xs font-medium flex justify-between items-center cursor-pointer ${p.assignedPos === slotCode ? 'bg-amber-100 border-amber-300 text-slate-900' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`;
+          pBtn.innerHTML = `<span>${p.name}</span> <span class="text-[10px] text-slate-400">(${p.pos})</span>`;
+          pBtn.onclick = () => {
+            appState.players = appState.players.map(pl => pl.assignedPos === slotCode ? { ...pl, assignedPos: null } : pl);
+            appState.players = appState.players.map(pl => pl.id === p.id ? { ...pl, assignedPos: slotCode } : pl);
+            triggerAutoSave();
+            closeModal();
+          };
+          list.appendChild(pBtn);
+        }
+      });
+
+      modal.classList.remove('hidden');
+    }
+
+    window.closeModal = function() {
+      document.getElementById('player-modal').classList.add('hidden');
+    }
+
+    window.addTag = function(event, taskKey) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        const val = event.target.value.trim();
+        if (val) {
+          appState.tasks[taskKey].push(val);
+          event.target.value = '';
+          triggerAutoSave();
+        }
+      }
+    }
+
+    window.removeTag = function(taskKey, index) {
+      appState.tasks[taskKey].splice(index, 1);
+      triggerAutoSave();
+    }
+
+    function renderTasks() {
+      ['wash', 'corvee', 'drivers', 'gang', 'fluit_jongens', 'fluit_meiden'].forEach(key => {
+        const container = document.getElementById(`tags-${key}`);
+        if (!container) return;
+        container.innerHTML = '';
+        
+        appState.tasks[key].forEach((item, index) => {
+          const tag = document.createElement('span');
+          tag.className = 'inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded-full font-medium';
+          tag.innerHTML = `${item} <button type="button" onclick="removeTag('${key}', ${index})" class="hover:text-rose-600 ml-0.5 cursor-pointer"><i class="fa-solid fa-xmark text-[10px]"></i></button>`;
+          container.appendChild(tag);
+        });
+      });
+    }
+
+    document.getElementById('btn-copy-whatsapp').addEventListener('click', () => {
+      const opp = appState.match.opponent || '-';
+      const type = appState.match.type || '-';
+      const date = appState.match.date ? ` (${appState.match.date})` : '';
+      const time = appState.match.time || '-';
+      const meet = appState.match.meet || '-';
+
+      const formatTask = (arr) => arr && arr.length > 0 ? arr.join(', ') : 'Nog indelen';
+
+      const wash = formatTask(appState.tasks.wash);
+      const corvee = formatTask(appState.tasks.corvee);
+      const drivers = formatTask(appState.tasks.drivers);
+      const gang = formatTask(appState.tasks.gang);
+
+      const fJongens = formatTask(appState.tasks.fluit_jongens);
+      const tJongens = appState.tasks.tijd_jongens ? ` (${appState.tasks.tijd_jongens})` : '';
+      const fJongensTekst = appState.tasks.fluit_jongens.length > 0 ? `${fJongens}${tJongens}` : 'N.v.t.';
+
+      const fMeiden = formatTask(appState.tasks.fluit_meiden);
+      const tMeiden = appState.tasks.tijd_meiden ? ` (${appState.tasks.tijd_meiden})` : '';
+      const fMeidenTekst = appState.tasks.fluit_meiden.length > 0 ? `${fMeiden}${tMeiden}` : 'N.v.t.';
+
+      const aanwezig = appState.players.filter(p => p.status === 'aanwezig').map(p => p.name).join(', ');
+      const afwezig = appState.players.filter(p => p.status !== 'aanwezig').map(p => `${p.name} (${p.status})`).join(', ');
+
+      const text = `⚽ *WEDSTRIJD INFORMATIE* ⚽\n` +
+        `--------------------------------\n` +
+        `🆚 *Tegenstander:* ${opp} (${type})${date}\n` +
+        `⏰ *Aanvang:* ${time} uur\n` +
+        `📍 *Verzamelen:* ${meet} uur\n\n` +
+        `📋 *TAKEN DEZE WEEK:*\n` +
+        `🧺 *Wassen:* ${wash}\n` +
+        `🧹 *Corvee:* ${corvee}\n` +
+        `🚗 *Rijders:* ${drivers}\n` +
+        `🧹 *Gangen Vegen:* ${gang}\n` +
+        `🚩 *Fluiten Jongens:* ${fJongensTekst}\n` +
+        `🚩 *Fluiten Meiden:* ${fMeidenTekst}\n\n` +
+        `✅ *Aanwezig:* ${aanwezig || 'Niemand'}\n` +
+        `❌ *Afwezig/Geblesseerd:* ${afwezig || 'Niemand'}\n\n` +
+        `Tot de wedstrijd! ⚽🔥`;
+
+      navigator.clipboard.writeText(text).then(() => {
+        alert('WhatsApp bericht is gekopieerd!');
+      }).catch(() => {
+        alert('Kopiëren mislukt.');
+      });
+    });
+  </script>
+</body>
+</html>
