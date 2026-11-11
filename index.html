@@ -230,8 +230,8 @@
     const pinError = document.getElementById('pin-error');
     const btnLogout = document.getElementById('btn-logout');
 
-    // Stabiele inlogcontrole die niet verloopt bij updates
-    const AUTH_KEY = 'teammanager_logged_in';
+    // Vaste en stabiele inlog-sleutel (raakt niet meer van stuk bij updates)
+    const AUTH_KEY = 'teammanager_is_logged_in';
 
     if (localStorage.getItem(AUTH_KEY) === 'true') {
       pinOverlay.classList.add('hidden');
@@ -576,4 +576,67 @@
     }
 
     function renderTasks() {
-      ['wash', 'corvee', 'drivers', 'gang', 'fluit_jong
+      ['wash', 'corvee', 'drivers', 'gang', 'fluit_jongens', 'fluit_meiden'].forEach(key => {
+        const container = document.getElementById(`tags-${key}`);
+        if (!container) return;
+        container.innerHTML = '';
+        
+        appState.tasks[key].forEach((item, index) => {
+          const tag = document.createElement('span');
+          tag.className = 'inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded-full font-medium';
+          tag.innerHTML = `${item} <button type="button" onclick="removeTag('${key}', ${index})" class="hover:text-rose-600 ml-0.5 cursor-pointer"><i class="fa-solid fa-xmark text-[10px]"></i></button>`;
+          container.appendChild(tag);
+        });
+      });
+    }
+
+    document.getElementById('btn-copy-whatsapp').addEventListener('click', () => {
+      const opp = appState.match.opponent || '-';
+      const type = appState.match.type || '-';
+      const date = appState.match.date ? ` (${appState.match.date})` : '';
+      const time = appState.match.time || '-';
+      const meet = appState.match.meet || '-';
+
+      const formatTask = (arr) => arr && arr.length > 0 ? arr.join(', ') : 'Nog indelen';
+
+      const wash = formatTask(appState.tasks.wash);
+      const corvee = formatTask(appState.tasks.corvee);
+      const drivers = formatTask(appState.tasks.drivers);
+      const gang = formatTask(appState.tasks.gang);
+
+      const fJongens = formatTask(appState.tasks.fluit_jongens);
+      const tJongens = appState.tasks.tijd_jongens ? ` (${appState.tasks.tijd_jongens})` : '';
+      const fJongensTekst = appState.tasks.fluit_jongens.length > 0 ? `${fJongens}${tJongens}` : 'N.v.t.';
+
+      const fMeiden = formatTask(appState.tasks.fluit_meiden);
+      const tMeiden = appState.tasks.tijd_meiden ? ` (${appState.tasks.tijd_meiden})` : '';
+      const fMeidenTekst = appState.tasks.fluit_meiden.length > 0 ? `${fMeiden}${tMeiden}` : 'N.v.t.';
+
+      const aanwezig = appState.players.filter(p => p.status === 'aanwezig').map(p => p.name).join(', ');
+      const afwezig = appState.players.filter(p => p.status !== 'aanwezig').map(p => `${p.name} (${p.status})`).join(', ');
+
+      const text = `⚽ *WEDSTRIJD INFORMATIE* ⚽\n` +
+        `--------------------------------\n` +
+        `🆚 *Tegenstander:* ${opp} (${type})${date}\n` +
+        `⏰ *Aanvang:* ${time} uur\n` +
+        `📍 *Verzamelen:* ${meet} uur\n\n` +
+        `📋 *TAKEN DEZE WEEK:*\n` +
+        `🧺 *Wassen:* ${wash}\n` +
+        `🧹 *Corvee:* ${corvee}\n` +
+        `🚗 *Rijders:* ${drivers}\n` +
+        `🧹 *Gangen Vegen:* ${gang}\n` +
+        `🚩 *Fluiten Jongens:* ${fJongensTekst}\n` +
+        `🚩 *Fluiten Meiden:* ${fMeidenTekst}\n\n` +
+        `✅ *Aanwezig:* ${aanwezig || 'Niemand'}\n` +
+        `❌ *Afwezig/Geblesseerd:* ${afwezig || 'Niemand'}\n\n` +
+        `Tot de wedstrijd! ⚽🔥`;
+
+      navigator.clipboard.writeText(text).then(() => {
+        alert('WhatsApp bericht is gekopieerd!');
+      }).catch(() => {
+        alert('Kopiëren mislukt.');
+      });
+    });
+  </script>
+</body>
+</html>
