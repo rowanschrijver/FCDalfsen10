@@ -301,17 +301,13 @@
 
         if (data && data.data && data.data.match) {
           appState = data.data;
-          // Zorg dat Rowan en eventuele nieuwe spelers netjes worden toegevoegd als de cloud nog een oude lijst had
-          if (!appState.players || appState.players.length !== defaultPlayers.length) {
-            // Behoud bestaande status van spelers indien mogelijk, voeg nieuwe toe
-            defaultPlayers.forEach(dp => {
-              const existing = appState.players.find(p => p.name === dp.name);
-              if (!existing) {
-                appState.players.push(dp);
-              }
-            });
-            appState.players.sort((a, b) => a.name.localeCompare(b.name));
-          }
+          // Zorg dat Rowan er altijd bij staat
+          defaultPlayers.forEach(dp => {
+            if (!appState.players.some(p => p.name === dp.name)) {
+              appState.players.push(dp);
+            }
+          });
+          appState.players.sort((a, b) => a.name.localeCompare(b.name));
         } else {
           await supabaseClient.from('team_data').upsert({ id: 'match_state', data: appState });
         }
@@ -328,7 +324,7 @@
     function setupRealtimeSync() {
       supabaseClient
         .channel('public:team_data')
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'team_data', filter: 'id=eq.match_state' }, payload => {
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'team_data', filter: 'id=eq.match_state' }, payload => {
           if (payload.new && payload.new.data) {
             appState = payload.new.data;
             renderAll();
